@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: nadi-wellness-radar
+    env: node
+    buildCommand: "npm install && cd frontend && npm install && npm run build"
+    startCommand: "node backend/server.js"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: YOUTUBE_API_KEY
+        sync: false
+      - key: NEWS_API_KEY
+        sync: false
+      - key: SERPAPI_KEY
+        sync: false
