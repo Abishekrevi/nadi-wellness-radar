@@ -6,20 +6,20 @@
 
 export function exportReportToPDF(result) {
   const { keyword, momentumAccelerationScore, classification, timeToMainstream,
-          marketSizePotential, intelligenceReport: r, dnaFingerprint,
-          signals, dataQuality, timestamp } = result
+    marketSizePotential, intelligenceReport: r, dnaFingerprint,
+    signals, dataQuality, timestamp } = result
 
   if (!r) { alert('No report data to export.'); return; }
 
   const score = momentumAccelerationScore
   const scoreColor =
     score >= 75 ? '#2DD4BF' :
-    score >= 60 ? '#2DD4BF' :
-    score >= 45 ? '#FCD34D' : '#F87171'
+      score >= 60 ? '#2DD4BF' :
+        score >= 45 ? '#FCD34D' : '#F87171'
 
   const verdictColor =
-    (r.verdict || '').includes('BUY')   ? '#2DD4BF' :
-    (r.verdict || '').includes('WATCH') ? '#FCD34D' : '#F87171'
+    (r.verdict || '').includes('BUY') ? '#2DD4BF' :
+      (r.verdict || '').includes('WATCH') ? '#FCD34D' : '#F87171'
 
   const strands = dnaFingerprint?.strands || []
 
@@ -114,7 +114,7 @@ export function exportReportToPDF(result) {
   <!-- Live Signal Data -->
   <h2>Live Signal Data</h2>
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:24px">
-    ${[['Reddit', signals?.reddit||0,'💬'],['YouTube',signals?.youtube||0,'▶'],['News',signals?.news||0,'📰'],['Research',signals?.research||0,'🔬'],['Amazon IN',signals?.ecommerce||0,'🛒']].map(([l,v,i])=>`
+    ${[['Reddit', signals?.reddit || 0, '💬'], ['YouTube', signals?.youtube || 0, '▶'], ['News', signals?.news || 0, '📰'], ['Research', signals?.research || 0, '🔬'], ['Amazon IN', signals?.ecommerce || 0, '🛒']].map(([l, v, i]) => `
     <div style="padding:10px;background:#0c1219;border:1px solid #1e2830;border-radius:3px;text-align:center">
       <div style="font-size:16px;margin-bottom:4px">${i}</div>
       <div style="font-family:monospace;font-size:16px;font-weight:700;color:#e8e4d8">${v}</div>
@@ -130,16 +130,16 @@ export function exportReportToPDF(result) {
 
   <!-- Intelligence Report Sections -->
   <h2>Intelligence Report</h2>
-  ${section('Executive Summary',    r.executive_summary,  '#C9A84C')}
-  ${section('Why Now — India',       r.why_now,            '#2DD4BF')}
-  ${section('Signal Evidence',       r.signal_evidence,    '#4A90D9')}
-  ${section('Target Consumer',       r.target_consumer,    '#C9A84C')}
-  ${section('Market Gap',            r.market_gap,         '#2DD4BF')}
-  ${section('Product Opportunity',   r.product_opportunity,'#C9A84C')}
-  ${section('Go-to-Market (90 days)',r.go_to_market,       '#2DD4BF')}
-  ${section('Revenue Model',         r.revenue_model,      '#C9A84C')}
-  ${section('Competitive Moat',      r.competitive_moat,   '#9B59B6')}
-  ${section('Risk Assessment',       r.risk_assessment,    '#F87171')}
+  ${section('Executive Summary', r.executive_summary, '#C9A84C')}
+  ${section('Why Now — India', r.why_now, '#2DD4BF')}
+  ${section('Signal Evidence', r.signal_evidence, '#4A90D9')}
+  ${section('Target Consumer', r.target_consumer, '#C9A84C')}
+  ${section('Market Gap', r.market_gap, '#2DD4BF')}
+  ${section('Product Opportunity', r.product_opportunity, '#C9A84C')}
+  ${section('Go-to-Market (90 days)', r.go_to_market, '#2DD4BF')}
+  ${section('Revenue Model', r.revenue_model, '#C9A84C')}
+  ${section('Competitive Moat', r.competitive_moat, '#9B59B6')}
+  ${section('Risk Assessment', r.risk_assessment, '#F87171')}
 
   <!-- Action Timeline -->
   ${r.action_timeline ? `
