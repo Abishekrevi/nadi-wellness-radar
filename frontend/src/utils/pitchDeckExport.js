@@ -1,26 +1,24 @@
 /**
  * NADI v2.0 — Professional Investor Pitch Deck Generator
-  * Generates a 14 - slide.pptx file in the browser using PptxGenJS
+ * Generates a 14-slide .pptx file in the browser using PptxGenJS
  *
- * Data contract(from buildResult in server.js):
- * result.keyword
-  * result.momentumAccelerationScore
-  * result.classification        { label, emoji, confidence, color }
- * result.confidence
-  * result.timeToMainstream
-  * result.marketSizePotential   { tam }
- * result.dnaFingerprint        { strands: [{ id, name, score, weight, description }] }
- * result.signals               { reddit, youtube, news, research, ecommerce, searchMomentum, totalStrength }
- * result.sourceAttribution[{ platform, mentions, live }]
-  * result.intelligenceReport    {
-  executive_summary, why_now, market_gap, signal_evidence,
- * target_consumer, product_opportunity, go_to_market,
- * revenue_model, competitive_moat, risk_assessment,
- * verdict, confidence_level, action_timeline
-}
-  * result.dataQuality           { grade, label, color }
- * result.timestamp
-  *
+ * Data contract (from buildResult in server.js):
+ *   result.keyword
+ *   result.momentumAccelerationScore
+ *   result.classification        { label, emoji, confidence, color }
+ *   result.confidence
+ *   result.timeToMainstream
+ *   result.marketSizePotential   { tam }
+ *   result.dnaFingerprint        { strands: [{id,name,score,weight,description}] }
+ *   result.signals               { reddit, youtube, news, research, ecommerce, searchMomentum, totalStrength }
+ *   result.sourceAttribution     [{ platform, mentions, live }]
+ *   result.intelligenceReport    { executive_summary, why_now, market_gap, signal_evidence,
+ *                                  target_consumer, product_opportunity, go_to_market,
+ *                                  revenue_model, competitive_moat, risk_assessment,
+ *                                  verdict, confidence_level, action_timeline }
+ *   result.dataQuality           { grade, label, color }
+ *   result.timestamp
+ */
 
 // ── CDN fallback loader ────────────────────────────────────────────
 const CDNS = [
@@ -362,7 +360,8 @@ function s9Product(pres, kw, r) {
   LBL(s, 'Target Consumer Profile', 0.62, 1.16, 5, P.GOLD);
   t(s, safe((r && r.target_consumer) || 'Urban Indian, 25-40, \u20B98-25L HHI, research-driven wellness seeker.', 200), 0.62, 1.36, 8.8, 0.35, { fontSize: 10, color: P.T1, wrap: true });
   var raw = (r && r.product_opportunity) || '';
-  var prods = raw.split(/\n+/).filter(function (p) { return p.trim().length > 8; }).slice(0, 3);
+  var prods = raw.split('
+').filter(function(p) { return p.trim().length > 8; }).slice(0, 3);
   var defaults = [
     'Premium supplement capsules \u2014 \u20B9400-600/month subscription. Clean formulation, Ayurvedic validation, third-party tested.',
     'Functional food / beverage format \u2014 \u20B9200-400. Daily ritual format. Instagram-native packaging targeting urban millennials.',
@@ -374,7 +373,8 @@ function s9Product(pres, kw, r) {
     box(s, 0.45, y, 9.1, 1.48);
     vbar(s, 0.45, y, 1.48, [P.GOLD, P.TEAL, P.AMBER][i]);
     t(s, 'Product Idea ' + (i + 1), 0.7, y + 0.1, 2.0, 0.28, { fontSize: 9, bold: true, color: [P.GOLD, P.TEAL, P.AMBER][i], fontFace: 'Courier New' });
-    t(s, p.replace(/^\d+[\.\)]\s*/, ''), 0.7, y + 0.42, 8.7, 0.95, { fontSize: 11, color: P.T1, wrap: true });
+    var cleanP = p.length > 3 && (p[0] >= '0' && p[0] <= '9') ? p.slice(p.indexOf(' ') + 1) : p;
+    t(s, cleanP, 0.7, y + 0.42, 8.7, 0.95, { fontSize: 11, color: P.T1, wrap: true });
   });
 }
 
@@ -577,7 +577,8 @@ export async function downloadPitchDeck(result) {
     s13Ask(pres, keyword, score, r);
     s14Closing(pres, keyword, score, r);
 
-    var fileName = 'NADI-PitchDeck-' + keyword.replace(/[^a-z0-9]/gi, '-').slice(0, 40) + '.pptx';
+    var safeKw = keyword.slice(0, 40).split('').map(function (c) { return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) ? c : '-'; }).join('');
+    var fileName = 'NADI-PitchDeck-' + safeKw + '.pptx';
     await pres.writeFile({ fileName: fileName });
 
     if (btn) {
