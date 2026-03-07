@@ -3,11 +3,12 @@ import Header from './components/Header.jsx'
 import RadarScan from './components/RadarScan.jsx'
 import AnalyzeSingle from './components/AnalyzeSingle.jsx'
 import ModelExplainer from './components/ModelExplainer.jsx'
+import Onboarding from './components/Onboarding.jsx'
 
 const TABS = [
-  { id: 'radar',   label: 'Radar Scan'    },
-  { id: 'analyze', label: 'Deep Analyze'  },
-  { id: 'model',   label: 'DNA Model'     },
+  { id: 'radar', label: 'Radar Scan' },
+  { id: 'analyze', label: 'Deep Analyze' },
+  { id: 'model', label: 'DNA Model' },
 ]
 
 export default function App() {
@@ -15,13 +16,13 @@ export default function App() {
 
   return (
     <>
-      <div className="grid-bg"/>
+      <Onboarding />
+      <div className="grid-bg" />
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <Header/>
+        <Header />
 
         <main style={{ flex: 1, padding: '32px 0 80px' }}>
           <div className="container">
-            {/* Hero line */}
             <div style={{ marginBottom: 28, paddingBottom: 28, borderBottom: '1px solid var(--border-dim)' }}>
               <div className="label" style={{ marginBottom: 8 }}>India Wellness Intelligence Platform</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
@@ -32,7 +33,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Tabs */}
             <div className="tab-bar" style={{ marginBottom: 32 }}>
               {TABS.map(t => (
                 <button key={t.id} className={`tab ${tab === t.id ? 'active' : ''}`}
@@ -42,9 +42,9 @@ export default function App() {
               ))}
             </div>
 
-            {tab === 'radar'   && <RadarScan/>}
-            {tab === 'analyze' && <AnalyzeSingle/>}
-            {tab === 'model'   && <ModelExplainer/>}
+            {tab === 'radar' && <RadarScan />}
+            {tab === 'analyze' && <AnalyzeSingle />}
+            {tab === 'model' && <ModelExplainer />}
           </div>
         </main>
 
