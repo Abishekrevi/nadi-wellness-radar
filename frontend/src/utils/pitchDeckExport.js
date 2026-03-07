@@ -13,14 +13,14 @@
  * result.signals               { reddit, youtube, news, research, ecommerce, searchMomentum, totalStrength }
  * result.sourceAttribution[{ platform, mentions, live }]
   * result.intelligenceReport    {
-    executive_summary, why_now, market_gap, signal_evidence,
+  executive_summary, why_now, market_gap, signal_evidence,
  * target_consumer, product_opportunity, go_to_market,
  * revenue_model, competitive_moat, risk_assessment,
  * verdict, confidence_level, action_timeline
 }
- * result.dataQuality           { grade, label, color }
+  * result.dataQuality           { grade, label, color }
  * result.timestamp
-  */
+  *
 
 // ── CDN fallback loader ────────────────────────────────────────────
 const CDNS = [
