@@ -360,8 +360,7 @@ function s9Product(pres, kw, r) {
   LBL(s, 'Target Consumer Profile', 0.62, 1.16, 5, P.GOLD);
   t(s, safe((r && r.target_consumer) || 'Urban Indian, 25-40, \u20B98-25L HHI, research-driven wellness seeker.', 200), 0.62, 1.36, 8.8, 0.35, { fontSize: 10, color: P.T1, wrap: true });
   var raw = (r && r.product_opportunity) || '';
-  var prods = raw.split('
-').filter(function(p) { return p.trim().length > 8; }).slice(0, 3);
+  var prods = raw.split('\n').filter(function (p) { return p.trim().length > 8; }).slice(0, 3);
   var defaults = [
     'Premium supplement capsules \u2014 \u20B9400-600/month subscription. Clean formulation, Ayurvedic validation, third-party tested.',
     'Functional food / beverage format \u2014 \u20B9200-400. Daily ritual format. Instagram-native packaging targeting urban millennials.',
