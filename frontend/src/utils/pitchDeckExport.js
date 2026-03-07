@@ -1,4 +1,4 @@
-//**
+/**
  * NADI v2.0 — Professional Investor Pitch Deck Generator
   * Generates a 14 - slide.pptx file in the browser using PptxGenJS
  *
