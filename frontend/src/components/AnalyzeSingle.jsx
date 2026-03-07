@@ -1,4 +1,9 @@
 import { useState } from 'react'
+import FadDetector from './FadDetector.jsx'
+import ReportChat from './ReportChat.jsx'
+import IndiaHeatmap from './IndiaHeatmap.jsx'
+import ScoreBadge from './ScoreBadge.jsx'
+import KeywordSuggestions from './KeywordSuggestions.jsx'
 import axios from 'axios'
 import ScoreRing from './ScoreRing.jsx'
 import TrendChart from './TrendChart.jsx'
@@ -22,20 +27,21 @@ function classBadge(label = '') {
   const l = label.toUpperCase()
   if (l.includes('BREAKOUT')) return 'badge-breakout'
   if (l.includes('EMERGING')) return 'badge-emerging'
-  if (l.includes('NASCENT'))  return 'badge-nascent'
-  if (l.includes('FAD'))      return 'badge-fad'
+  if (l.includes('NASCENT')) return 'badge-nascent'
+  if (l.includes('FAD')) return 'badge-fad'
   return 'badge-noise'
 }
 
 export default function AnalyzeSingle() {
-  const [kw,      setKw]      = useState('')
+  const [kw, setKw] = useState('')
   const [loading, setLoading] = useState(false)
-  const [result,  setResult]  = useState(null)
-  const [error,   setError]   = useState(null)
+  const [result, setResult] = useState(null)
+  const [error, setError] = useState(null)
 
   const analyze = async (keyword) => {
     const target = (keyword || kw).trim()
     if (!target) return
+    if (keyword) setKw(keyword)
     setLoading(true); setError(null); setResult(null)
     try {
       const r = await axios.post(`${API_URL}/api/analyze`, { keyword: target }, { timeout: 90000 })
@@ -83,6 +89,9 @@ export default function AnalyzeSingle() {
         ))}
       </div>
 
+      {/* Keyword suggestions */}
+      <KeywordSuggestions keyword={kw} onSelect={(s) => { setKw(s); analyze(s) }} disabled={loading} />
+
       {/* Loading */}
       {loading && (
         <div className="card scan-container" style={{ padding: 48, textAlign: 'center', marginBottom: 24 }}>
@@ -95,7 +104,7 @@ export default function AnalyzeSingle() {
           <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
             {['Reddit', 'YouTube', 'Trends', 'PubMed', 'Amazon'].map((s, i) => (
               <div key={s} className="source-chip" style={{ animation: `pulse-ring 1.8s infinite`, animationDelay: `${i * 0.3}s` }}>
-                <div className="dot"/>
+                <div className="dot" />
                 {s}
               </div>
             ))}
@@ -116,7 +125,7 @@ export default function AnalyzeSingle() {
           {/* Score header */}
           <div className="card card-gold" style={{ padding: 24, marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-              <ScoreRing score={result.momentumAccelerationScore} size={90}/>
+              <ScoreRing score={result.momentumAccelerationScore} size={90} />
               <div style={{ flex: 1 }}>
                 <div className="label" style={{ marginBottom: 6 }}>DNA Fingerprint Complete</div>
                 <h2 style={{ fontFamily: 'var(--f-display)', fontSize: 24, marginBottom: 8 }}>
@@ -149,10 +158,10 @@ export default function AnalyzeSingle() {
             {/* Signal stats */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginTop: 20 }}>
               {[
-                { l: 'Reddit',    v: result.signals?.reddit    || 0, i: '💬' },
-                { l: 'YouTube',   v: result.signals?.youtube   || 0, i: '▶'  },
-                { l: 'News',      v: result.signals?.news      || 0, i: '📰' },
-                { l: 'Research',  v: result.signals?.research  || 0, i: '🔬' },
+                { l: 'Reddit', v: result.signals?.reddit || 0, i: '💬' },
+                { l: 'YouTube', v: result.signals?.youtube || 0, i: '▶' },
+                { l: 'News', v: result.signals?.news || 0, i: '📰' },
+                { l: 'Research', v: result.signals?.research || 0, i: '🔬' },
                 { l: 'Amazon IN', v: result.signals?.ecommerce || 0, i: '🛒' },
               ].map(s => (
                 <div key={s.l} className="stat-box">
@@ -168,7 +177,7 @@ export default function AnalyzeSingle() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
             <div className="card" style={{ padding: 20 }}>
               <div className="label" style={{ marginBottom: 12 }}>Google Trends — India (12 months)</div>
-              <TrendChart data={result.signals?.searchTrend} height={140} color="var(--gold)"/>
+              <TrendChart data={result.signals?.searchTrend} height={140} color="var(--gold)" />
               <div className="mono" style={{ fontSize: 11, textAlign: 'center', marginTop: 10 }}>
                 Search momentum:{' '}
                 <span style={{ color: (result.signals?.searchMomentum || 0) >= 0 ? 'var(--teal)' : 'var(--red)', fontWeight: 500 }}>
@@ -193,13 +202,20 @@ export default function AnalyzeSingle() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                 {result.sourceAttribution.map(s => (
                   <div key={s.platform} className="source-chip">
-                    <div className="dot"/>
+                    <div className="dot" />
                     {s.platform}: <strong style={{ color: 'var(--text-1)', marginLeft: 3 }}>{s.mentions}</strong>
                   </div>
                 ))}
               </div>
             </div>
           )}
+
+          {/* Fad Detector */}
+          <FadDetector
+            score={result.momentumAccelerationScore}
+            strands={result.dnaFingerprint?.strands}
+            keyword={result.keyword}
+          />
 
           {/* Intelligence Report */}
           <div className="card" style={{ padding: 24 }}>
@@ -210,6 +226,9 @@ export default function AnalyzeSingle() {
               marketSize={result.marketSizePotential}
               fullResult={result}
             />
+            <ScoreBadge result={result} />
+            <IndiaHeatmap keyword={result.keyword} score={result.momentumAccelerationScore} />
+            <ReportChat result={result} />
           </div>
         </div>
       )}
