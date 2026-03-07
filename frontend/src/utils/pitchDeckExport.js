@@ -20,29 +20,10 @@
  *   result.timestamp
  */
 
-// ── CDN fallback loader ────────────────────────────────────────────
-const CDNS = [
-  'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js',
-  'https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js',
-];
+import PptxGenJS from 'pptxgenjs';
 
 function loadLib() {
-  return new Promise((resolve, reject) => {
-    if (window.PptxGenJS) { resolve(window.PptxGenJS); return; }
-    let i = 0;
-    function next() {
-      if (i >= CDNS.length) { reject(new Error('Could not load PptxGenJS. Please check your internet connection and try again.')); return; }
-      const el = document.getElementById('__pptxgen');
-      if (el) el.remove();
-      const s = document.createElement('script');
-      s.id = '__pptxgen';
-      s.src = CDNS[i++];
-      s.onload = () => (window.PptxGenJS ? resolve(window.PptxGenJS) : next());
-      s.onerror = () => next();
-      document.head.appendChild(s);
-    }
-    next();
-  });
+  return Promise.resolve(PptxGenJS);
 }
 
 // ── Colour palette ─────────────────────────────────────────────────
@@ -543,7 +524,6 @@ export async function downloadPitchDeck(result) {
   if (btn) { btn.textContent = '\u23F3 Building deck...'; btn.disabled = true; }
 
   try {
-    var PptxGenJS = await loadLib();
     var pres = new PptxGenJS();
 
     pres.layout = 'LAYOUT_WIDE';
