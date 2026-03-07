@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { exportReportToPDF } from '../utils/pdfExport.js'
-import { exportPitchDeck }   from '../utils/pitchDeck.js'
+import { downloadPitchDeck } from '../utils/pitchDeckExport.js'
 
 const Block = ({ label, content, accent = 'var(--gold)', className = '' }) => {
   if (!content) return null
@@ -17,16 +17,16 @@ const Block = ({ label, content, accent = 'var(--gold)', className = '' }) => {
 const VerdictChip = ({ verdict }) => {
   const v = (verdict || '').toUpperCase()
   const isStrongBuy = v.includes('STRONG BUY')
-  const isBuy       = v.includes('BUY') && !v.includes('STRONG')
-  const isWatch     = v.includes('WATCH')
+  const isBuy = v.includes('BUY') && !v.includes('STRONG')
+  const isWatch = v.includes('WATCH')
 
   const cfg = isStrongBuy
-    ? { color: 'var(--teal)',  bg: 'rgba(45,212,191,0.1)',  border: 'rgba(45,212,191,0.3)',  icon: '🚀', label: 'STRONG BUY' }
+    ? { color: 'var(--teal)', bg: 'rgba(45,212,191,0.1)', border: 'rgba(45,212,191,0.3)', icon: '🚀', label: 'STRONG BUY' }
     : isBuy
-    ? { color: 'var(--teal)',  bg: 'rgba(45,212,191,0.07)', border: 'rgba(45,212,191,0.2)',  icon: '📈', label: 'BUY'        }
-    : isWatch
-    ? { color: 'var(--amber)', bg: 'var(--amber-lo)',        border: 'rgba(252,211,77,0.3)',  icon: '👀', label: 'WATCH'      }
-    :   { color: 'var(--red)', bg: 'var(--red-lo)',          border: 'rgba(248,113,113,0.3)', icon: '⏭', label: 'PASS'       }
+      ? { color: 'var(--teal)', bg: 'rgba(45,212,191,0.07)', border: 'rgba(45,212,191,0.2)', icon: '📈', label: 'BUY' }
+      : isWatch
+        ? { color: 'var(--amber)', bg: 'var(--amber-lo)', border: 'rgba(252,211,77,0.3)', icon: '👀', label: 'WATCH' }
+        : { color: 'var(--red)', bg: 'var(--red-lo)', border: 'rgba(248,113,113,0.3)', icon: '⏭', label: 'PASS' }
 
   return (
     <div style={{
@@ -43,7 +43,7 @@ const VerdictChip = ({ verdict }) => {
 }
 
 export default function IntelligenceReport({ report: r, keyword, marketSize, fullResult }) {
-  const [expanded,    setExpanded]    = useState(false)
+  const [expanded, setExpanded] = useState(false)
   const [deckLoading, setDeckLoading] = useState(false)
 
   if (!r) return null
@@ -52,7 +52,7 @@ export default function IntelligenceReport({ report: r, keyword, marketSize, ful
     if (!fullResult || deckLoading) return
     setDeckLoading(true)
     try {
-      await exportPitchDeck(fullResult)
+      await downloadPitchDeck(fullResult)
     } catch (e) {
       alert('Pitch deck export failed: ' + e.message)
     } finally {
@@ -74,7 +74,7 @@ export default function IntelligenceReport({ report: r, keyword, marketSize, ful
       }}>
         <div>
           <div className="label" style={{ marginBottom: 8 }}>Opportunity Verdict — {keyword}</div>
-          <VerdictChip verdict={r.verdict}/>
+          <VerdictChip verdict={r.verdict} />
           {r.confidence_level && (
             <div className="mono" style={{ fontSize: 10, color: 'var(--text-2)', marginTop: 7 }}>
               Confidence: <span style={{ color: 'var(--text-1)' }}>{r.confidence_level}</span>
@@ -137,20 +137,20 @@ export default function IntelligenceReport({ report: r, keyword, marketSize, ful
       )}
 
       {/* ── Always-visible sections ── */}
-      <Block label="Executive Summary"      content={r.executive_summary} accent="var(--gold)"/>
-      <Block label="Why Now — India Timing" content={r.why_now}           accent="var(--teal)"  className="teal"/>
-      <Block label="Signal Evidence"        content={r.signal_evidence}   accent="#4A90D9"       className="teal"/>
+      <Block label="Executive Summary" content={r.executive_summary} accent="var(--gold)" />
+      <Block label="Why Now — India Timing" content={r.why_now} accent="var(--teal)" className="teal" />
+      <Block label="Signal Evidence" content={r.signal_evidence} accent="#4A90D9" className="teal" />
 
       {/* ── Expanded sections ── */}
       {expanded && (
         <div className="anim-up">
-          <Block label="Target Consumer Profile" content={r.target_consumer}     accent="var(--gold)"/>
-          <Block label="Market Gap"              content={r.market_gap}          accent="var(--teal)" className="teal"/>
-          <Block label="Product Opportunity"     content={r.product_opportunity} accent="var(--gold)"/>
-          <Block label="Go-to-Market (90 Days)"  content={r.go_to_market}        accent="var(--teal)" className="teal"/>
-          <Block label="Revenue Model"           content={r.revenue_model}       accent="var(--gold)"/>
-          <Block label="Competitive Moat"        content={r.competitive_moat}    accent="#9B59B6"/>
-          <Block label="Risk Assessment"         content={r.risk_assessment}     accent="var(--red)"  className="red"/>
+          <Block label="Target Consumer Profile" content={r.target_consumer} accent="var(--gold)" />
+          <Block label="Market Gap" content={r.market_gap} accent="var(--teal)" className="teal" />
+          <Block label="Product Opportunity" content={r.product_opportunity} accent="var(--gold)" />
+          <Block label="Go-to-Market (90 Days)" content={r.go_to_market} accent="var(--teal)" className="teal" />
+          <Block label="Revenue Model" content={r.revenue_model} accent="var(--gold)" />
+          <Block label="Competitive Moat" content={r.competitive_moat} accent="#9B59B6" />
+          <Block label="Risk Assessment" content={r.risk_assessment} accent="var(--red)" className="red" />
         </div>
       )}
 
