@@ -5,6 +5,7 @@ import DNAFingerprint from './DNAFingerprint.jsx'
 import IntelligenceReport from './IntelligenceReport.jsx'
 import { exportReportToPDF } from '../utils/pdfExport.js'
 
+
 const API_URL = import.meta.env.VITE_API_URL || ''
 
 const PRESETS = [
@@ -338,7 +339,6 @@ export default function RadarScan() {
                 <button
                   className="pdf-btn"
                   style={{ background: 'rgba(45,212,191,0.1)', borderColor: 'rgba(45,212,191,0.3)', color: 'var(--teal)' }}
-                  onClick={() => downloadPitchDeck(results.topTrend)}
                 >
                   📊 Pitch Deck
                 </button>
