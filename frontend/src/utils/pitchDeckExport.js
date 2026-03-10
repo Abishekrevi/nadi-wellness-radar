@@ -144,36 +144,36 @@ function s01Cover(pres, kw, score, cls, ts) {
   });
 
   // One-liner (the YC "what you do in one sentence")
-  tx(s, 'India's first DNA Trend Fingerprinting intelligence platform for wellness D2C founders.', 0.4, 1.82, 7.5, 0.75, {
-  fontSize: 17, color: C.T2, fontFace: 'Calibri', wrap: true,
+  tx(s, "India's first DNA Trend Fingerprinting intelligence platform for wellness D2C founders.", 0.4, 1.82, 7.5, 0.75, {
+    fontSize: 17, color: C.T2, fontFace: 'Calibri', wrap: true,
   });
 
-// Divider
-fillRect(s, 0.4, 2.65, 5.5, 0.03, C.BD);
+  // Divider
+  fillRect(s, 0.4, 2.65, 5.5, 0.03, C.BD);
 
-// Current trend being pitched
-tx(s, kw, 0.4, 2.82, 9, 1.1, {
-  fontSize: 38, bold: true, fontFace: 'Trebuchet MS', color: C.T1, wrap: true,
-});
+  // Current trend being pitched
+  tx(s, kw, 0.4, 2.82, 9, 1.1, {
+    fontSize: 38, bold: true, fontFace: 'Trebuchet MS', color: C.T1, wrap: true,
+  });
 
-// MAS score — the single hero number
-fillRect(s, 7.2, 1.65, 2.4, 2.0, C.BG2);
-fillRect(s, 7.2, 1.65, 2.4, 0.05, sclr(score));
-tx(s, String(score), 7.2, 1.75, 2.4, 1.1, {
-  fontSize: 64, bold: true, fontFace: 'Trebuchet MS', color: sclr(score), align: 'center', valign: 'middle',
-});
-tx(s, 'MOMENTUM ACCELERATION SCORE', 7.2, 2.92, 2.4, 0.35, {
-  fontSize: 7, color: C.T3, align: 'center', charSpacing: 1, fontFace: 'Calibri',
-});
-tx(s, '/100', 7.2, 3.16, 2.4, 0.3, { fontSize: 12, color: C.T3, align: 'center', fontFace: 'Calibri' });
+  // MAS score — the single hero number
+  fillRect(s, 7.2, 1.65, 2.4, 2.0, C.BG2);
+  fillRect(s, 7.2, 1.65, 2.4, 0.05, sclr(score));
+  tx(s, String(score), 7.2, 1.75, 2.4, 1.1, {
+    fontSize: 64, bold: true, fontFace: 'Trebuchet MS', color: sclr(score), align: 'center', valign: 'middle',
+  });
+  tx(s, 'MOMENTUM ACCELERATION SCORE', 7.2, 2.92, 2.4, 0.35, {
+    fontSize: 7, color: C.T3, align: 'center', charSpacing: 1, fontFace: 'Calibri',
+  });
+  tx(s, '/100', 7.2, 3.16, 2.4, 0.3, { fontSize: 12, color: C.T3, align: 'center', fontFace: 'Calibri' });
 
-// Classification
-tx(s, (cls && cls.emoji || '') + ' ' + (cls && cls.label || ''), 0.4, 4.05, 6, 0.45, {
-  fontSize: 16, bold: true, color: sclr(score), fontFace: 'Calibri',
-});
+  // Classification
+  tx(s, (cls && cls.emoji || '') + ' ' + (cls && cls.label || ''), 0.4, 4.05, 6, 0.45, {
+    fontSize: 16, bold: true, color: sclr(score), fontFace: 'Calibri',
+  });
 
-var dt = new Date(ts || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
-footer(s, 'NADI · Neural Ayurvedic & Digital Intelligence', dt);
+  var dt = new Date(ts || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+  footer(s, 'NADI · Neural Ayurvedic & Digital Intelligence', dt);
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -279,7 +279,7 @@ function s05Market(pres, kw, msp) {
   var markets = [
     { label: 'TAM — Total Indian Wellness Market', val: '₹50,000Cr+', sub: 'Growing at 12% CAGR · USD 60Bn by 2027', color: C.GOLHI, w: 8.9, x: 0.55, y: 1.82 },
     { label: 'SAM — D2C Digital Wellness Segment', val: '₹8,000Cr+', sub: 'Online-first brands · UPI-enabled consumers', color: C.TEAL, w: 6.5, x: 1.75, y: 3.12 },
-    { label: 'SOM — ' + kw + ' Category (5yr)', val: '₹' + tam + 'Cr', sub: 'NADI\'s immediate addressable opportunity', color: C.ORANGE, w: 4.2, x: 3.0, y: 4.42 },
+    { label: 'SOM — ' + kw + ' Category (5yr)', val: '₹' + tam + 'Cr', sub: "NADI's immediate addressable opportunity", color: C.ORANGE, w: 4.2, x: 3.0, y: 4.42 },
   ];
 
   markets.forEach(function (m) {
