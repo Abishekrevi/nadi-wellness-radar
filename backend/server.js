@@ -10,6 +10,8 @@ const { calculateMomentumAccelerationScore, calculateDNAScores,
   findClosestHistoricalPattern, DNA_STRANDS } = require('./dnaEngine');
 const { generateIntelligenceReport } = require('./reportGenerator');
 const DATA_SOURCES = require('./dataSources');
+const { retrieveSources, formatContext } = require('./ragEngine');
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -321,6 +323,45 @@ function getDefaultKeywords() {
   ];
   return new Date().getDate() % 2 === 0 ? all.slice(0, 6) : all.slice(4, 10);
 }
+
+
+// ══════════════════════════════════════════════════════════
+// RAG ENDPOINT — Retrieve real sources then return as context
+// Frontend calls this BEFORE generating AI responses
+// ══════════════════════════════════════════════════════════
+app.post('/api/rag-retrieve', async (req, res) => {
+  const { keyword, mode } = req.body || {};
+  if (!keyword || !mode) {
+    return res.status(400).json({ error: 'INVALID_INPUT', message: 'keyword and mode required.' });
+  }
+
+  const cacheKey = 'rag:' + keyword.toLowerCase().trim() + ':' + mode;
+  const cached = getCached(cacheKey);
+  if (cached) return res.json(cached);
+
+  try {
+    console.log('[RAG] Retrieving sources for:', keyword, '| mode:', mode);
+    const sources = await retrieveSources(keyword, mode, {
+      serpapi: process.env.SERPAPI_KEY,
+      news: process.env.NEWS_API_KEY,
+    });
+    const context = formatContext(sources);
+    const result = {
+      keyword,
+      mode,
+      sources,
+      context,
+      sourceCount: sources.length,
+      retrievedAt: new Date().toISOString(),
+    };
+    setCache(cacheKey, result);
+    console.log('[RAG] Retrieved', sources.length, 'sources for:', keyword);
+    res.json(result);
+  } catch (err) {
+    console.error('[RAG] Error:', err.message);
+    res.status(500).json({ error: 'RAG_FAILED', message: err.message });
+  }
+});
 
 process.on('SIGTERM', () => { console.log('Graceful shutdown.'); process.exit(0); });
 process.on('uncaughtException', e => console.error('[uncaughtException]', e.message));

@@ -1,3 +1,4 @@
+import { useRAG, SourcePanel, RAGStatus } from '../utils/useRAG.js'
 import { useState } from 'react'
 
 function buildPrompt(keyword, result) {
@@ -56,6 +57,8 @@ function ShareBadge({ share }) {
 }
 
 export default function CompetitorTracker({ keyword, result }) {
+    var rag = useRAG()
+    var [ragData, setRagData] = useState(null)
     var [loading, setLoading] = useState(false)
     var [data, setData] = useState(null)
     var [open, setOpen] = useState(false)
@@ -67,12 +70,19 @@ export default function CompetitorTracker({ keyword, result }) {
     async function generate() {
         setLoading(true); setError(null)
         try {
+            // Step 1: Retrieve real sources (RAG)
+            var retrieved = await rag.retrieve(keyword, 'competitor')
+            setRagData(retrieved)
+            var ragContext = retrieved.context || ''
+            var basePrompt = buildPrompt(keyword, result || {})
+            var prompt = basePrompt + '\n\nREAL RETRIEVED SOURCES (ground your answer in these, do not hallucinate):\n' + ragContext
+            // Step 2: AI answers from real data
             var res = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     model: 'claude-sonnet-4-20250514', max_tokens: 1500,
-                    messages: [{ role: 'user', content: buildPrompt(keyword, result) }],
+                    messages: [{ role: 'user', content: prompt }],
                 }),
             })
             var d = await res.json()

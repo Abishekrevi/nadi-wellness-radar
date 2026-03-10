@@ -1,3 +1,4 @@
+import { useRAG, SourcePanel, RAGStatus } from '../utils/useRAG.js'
 import { useState } from 'react'
 
 function buildPrompt(keyword) {
@@ -42,6 +43,8 @@ function ScoreBar({ label, score, color, stage }) {
 }
 
 export default function GlobalComparison({ keyword, result }) {
+    var rag = useRAG()
+    var [ragData, setRagData] = useState(null)
     var [loading, setLoading] = useState(false)
     var [data, setData] = useState(null)
     var [open, setOpen] = useState(false)

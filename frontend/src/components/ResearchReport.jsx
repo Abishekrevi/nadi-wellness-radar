@@ -1,3 +1,4 @@
+import { useRAG, SourcePanel, RAGStatus } from '../utils/useRAG.js'
 import { useState } from 'react'
 
 function buildPrompt(keyword, result) {
@@ -122,18 +123,27 @@ export default function ResearchReport({ keyword, result }) {
     var [section, setSection] = useState('overview')
     var [error, setError] = useState(null)
     var [copied, setCopied] = useState(false)
+    var [ragData, setRagData] = useState(null)
+    var rag = useRAG()
 
     if (!keyword) return null
 
     async function generate() {
         setLoading(true); setError(null)
         try {
+            // Step 1: Retrieve real sources (RAG)
+            var retrieved = await rag.retrieve(keyword, 'research')
+            setRagData(retrieved)
+            // Step 2: Build prompt grounded in real sources
+            var ragContext = retrieved.context || ''
+            var prompt = buildPrompt(keyword, result) + '\n\nREAL RETRIEVED SOURCES (use these to ground your answer, cite them, do not hallucinate):\n' + ragContext
+            // Step 3: Generate AI response from real data
             var res = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     model: 'claude-sonnet-4-20250514', max_tokens: 4000,
-                    messages: [{ role: 'user', content: buildPrompt(keyword, result) }],
+                    messages: [{ role: 'user', content: prompt }],
                 }),
             })
             var d = await res.json()
@@ -205,6 +215,7 @@ export default function ResearchReport({ keyword, result }) {
                         </div>
                     </div>
 
+                    <RAGStatus retrieving={rag.retrieving} sourceCount={ragData && ragData.sourceCount} />
                     {loading && (
                         <div style={{ padding: 48, textAlign: 'center' }}>
                             <div style={{ fontSize: 36, marginBottom: 12 }}>📊</div>

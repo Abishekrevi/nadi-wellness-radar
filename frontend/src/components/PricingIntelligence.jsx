@@ -1,3 +1,4 @@
+import { useRAG, SourcePanel, RAGStatus } from '../utils/useRAG.js'
 import { useState } from 'react'
 
 function buildPrompt(keyword, result) {
@@ -85,6 +86,8 @@ function TierCard({ tier, recommended }) {
 }
 
 export default function PricingIntelligence({ keyword, result }) {
+    var rag = useRAG()
+    var [ragData, setRagData] = useState(null)
     var [loading, setLoading] = useState(false)
     var [data, setData] = useState(null)
     var [open, setOpen] = useState(false)
@@ -102,7 +105,7 @@ export default function PricingIntelligence({ keyword, result }) {
                 body: JSON.stringify({
                     model: 'claude-sonnet-4-20250514',
                     max_tokens: 1000,
-                    messages: [{ role: 'user', content: buildPrompt(keyword, result) }],
+                    messages: [{ role: 'user', content: prompt }],
                 }),
             })
             var res = await response.json()
