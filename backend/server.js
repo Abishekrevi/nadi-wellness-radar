@@ -341,15 +341,16 @@ app.post('/api/rag-retrieve', async (req, res) => {
 
   try {
     console.log('[RAG] Retrieving sources for:', keyword, '| mode:', mode);
-    const sources = await retrieveSources(keyword, mode, {
+    const { sources, quantSignals } = await retrieveSources(keyword, mode, {
       serpapi: process.env.SERPAPI_KEY,
       news: process.env.NEWS_API_KEY,
     });
-    const context = formatContext(sources);
+    const context = formatContext(sources, quantSignals, keyword, mode);
     const result = {
       keyword,
       mode,
       sources,
+      quantSignals,
       context,
       sourceCount: sources.length,
       retrievedAt: new Date().toISOString(),

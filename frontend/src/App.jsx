@@ -1,3 +1,4 @@
+import ThemeToggle, { useTheme } from './components/ThemeToggle.jsx'
 import { useState } from 'react'
 import Header from './components/Header.jsx'
 import RadarScan from './components/RadarScan.jsx'
@@ -23,6 +24,7 @@ var TABS = [
 
 function AppInner() {
   var [tab, setTab] = useState('radar')
+  var { theme, toggle: toggleTheme } = useTheme()
   var { lang } = useLang()
   var T = TRANSLATIONS[lang]
   var watchlist = useWatchlist()
@@ -126,7 +128,10 @@ function AppInner() {
                     })}
                   </div>
                 </div>
-                <LangToggle />
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <ThemeToggle theme={theme} onToggle={toggleTheme} />
+                  <LangToggle />
+                </div>
               </div>
             </div>
 
