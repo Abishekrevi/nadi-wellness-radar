@@ -73,7 +73,7 @@ export default function SupplierFinder({ keyword, result }) {
             // Step 1: Retrieve real sources (RAG)
             var retrieved = await rag.retrieve(keyword, 'supplier')
             setRagData(retrieved)
-            var ragContext = retrieved.context || ''
+            var ragContext = (retrieved.context || '').slice(0, 3000)
             var basePrompt = buildPrompt(keyword, result || {})
             var prompt = basePrompt + '\n\nREAL RETRIEVED SOURCES (ground your answer in these, do not hallucinate):\n' + ragContext
             // Step 2: AI answers from real data
@@ -87,7 +87,7 @@ export default function SupplierFinder({ keyword, result }) {
             var text = d.content?.[0]?.text || ''
             if (!text) throw new Error('Empty response from AI')
             setData(JSON.parse(text.replace(/```json|```/g, '').replace(/^[^{\[]*/, '').replace(/[^}\]]*$/, '').trim()))
-        } catch (e) { console.error('[Could not load supplier data. Try again.]', e); setError(e.message || 'Could not load supplier data. Try again.') }
+        } catch (e) { console.error('[Could not load supplier data. Try again.]', e); setError('❌ ' + (e.message || 'Could not load supplier data. Try again.')) }
         finally { setLoading(false) }
     }
 

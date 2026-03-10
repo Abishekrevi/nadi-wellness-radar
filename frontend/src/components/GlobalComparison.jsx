@@ -67,7 +67,7 @@ export default function GlobalComparison({ keyword, result }) {
             if (!text) throw new Error('Empty response from AI')
             var clean = text.replace(/```json|```/g, '').replace(/^[^{\[]*/, '').replace(/[^}\]]*$/, '').trim()
             setData(JSON.parse(clean))
-        } catch (e) { console.error('[Could not load comparison. Try again.]', e); setError(e.message || 'Could not load comparison. Try again.') } finally {
+        } catch (e) { console.error('[Could not load comparison. Try again.]', e); setError('❌ ' + (e.message || 'Could not load comparison. Try again.')) } finally {
             setLoading(false)
         }
     }

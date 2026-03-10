@@ -66,7 +66,7 @@ export default function TrendNewsFeed({ keyword }) {
             var clean = text.replace(/```json|```/g, '').replace(/^[^{\[]*/, '').replace(/[^}\]]*$/, '').trim()
             var parsed = JSON.parse(clean)
             setArticles(parsed.articles || [])
-        } catch (e) { console.error('[Could not load news feed. Try again.]', e); setError(e.message || 'Could not load news feed. Try again.') } finally {
+        } catch (e) { console.error('[Could not load news feed. Try again.]', e); setError('❌ ' + (e.message || 'Could not load news feed. Try again.')) } finally {
             setLoading(false)
         }
     }

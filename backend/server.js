@@ -81,20 +81,24 @@ app.get('/api/health', (_req, res) => res.json({
 app.get('/api/ai-test', async (_req, res) => {
   const geminiKey = process.env.GEMINI_API_KEY;
   if (!geminiKey || geminiKey.length < 10)
-    return res.json({ status: 'FAIL', reason: 'GEMINI_API_KEY not set in environment' });
+    return res.json({ status: 'FAIL', reason: 'GEMINI_API_KEY not set in environment', keyLength: (geminiKey || '').length });
   try {
     const r = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
       {
-        contents: [{ parts: [{ text: 'Reply with exactly: {"ok":true}' }] }],
-        generationConfig: { maxOutputTokens: 50 }
+        contents: [{ parts: [{ text: 'Reply with exactly this JSON and nothing else: {"ok":true,"status":"working"}' }] }],
+        generationConfig: { maxOutputTokens: 100, temperature: 0 }
       },
       { timeout: 15000 }
     );
     const text = r.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    res.json({ status: 'OK', geminiResponse: text, keyLength: geminiKey.length });
+    const finishReason = r.data?.candidates?.[0]?.finishReason || 'unknown';
+    const blocked = r.data?.promptFeedback?.blockReason || null;
+    res.json({ status: 'OK', geminiResponse: text, finishReason, blocked, keyLength: geminiKey.length });
   } catch (err) {
-    res.json({ status: 'FAIL', error: err.response?.data?.error?.message || err.message });
+    const errMsg = err.response?.data?.error?.message || err.message;
+    const errStatus = err.response?.status;
+    res.json({ status: 'FAIL', error: errMsg, httpStatus: errStatus, keyLength: geminiKey.length });
   }
 });
 
@@ -407,34 +411,69 @@ app.post('/api/ai-generate', async (req, res) => {
     return res.status(500).json({ error: 'AI API key not configured on server' });
   }
 
-  const maxTok = Math.min(parseInt(max_tokens) || 1500, 8000);
-  console.log(`[ai-generate] prompt length=${prompt.length} max_tokens=${maxTok}`);
+  // Detect if this prompt expects JSON back
+  const wantsJson = prompt.includes('Respond ONLY with valid JSON') || prompt.includes('no markdown');
+  const maxTok = Math.min(parseInt(max_tokens) || 2000, 8000);
+
+  // Truncate very long prompts to avoid Gemini limits (keep first 12000 chars)
+  const truncatedPrompt = prompt.length > 12000
+    ? prompt.slice(0, 12000) + '\n[Context truncated for length]'
+    : prompt;
+
+  console.log(`[ai-generate] wantsJson=${wantsJson} promptLen=${truncatedPrompt.length} maxTok=${maxTok}`);
 
   try {
+    const body = {
+      contents: [{ parts: [{ text: truncatedPrompt }] }],
+      generationConfig: {
+        temperature: 0.3,
+        maxOutputTokens: maxTok,
+        // responseMimeType not used - causes errors on some Gemini versions
+      },
+      safetySettings: [
+        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      ],
+    };
+
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
-      {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.4, maxOutputTokens: maxTok },
-        safetySettings: [
-          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-        ],
-      },
-      { headers: { 'Content-Type': 'application/json' }, timeout: 50000 }
+      body,
+      { headers: { 'Content-Type': 'application/json' }, timeout: 60000 }
     );
 
-    const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    console.log(`[ai-generate] success, response length=${text.length}`);
-    // Return in Anthropic-compatible format so all frontend components work unchanged
+    const candidate = response.data?.candidates?.[0];
+
+    // Check for safety block or empty response
+    if (!candidate) {
+      const blockReason = response.data?.promptFeedback?.blockReason || 'No candidates returned';
+      console.error('[ai-generate] Blocked/empty:', blockReason, JSON.stringify(response.data).slice(0, 300));
+      return res.status(500).json({ error: 'AI blocked response', message: blockReason });
+    }
+
+    if (candidate.finishReason === 'SAFETY') {
+      console.error('[ai-generate] Safety blocked');
+      return res.status(500).json({ error: 'Content blocked by safety filter', message: 'SAFETY' });
+    }
+
+    const text = candidate.content?.parts?.[0]?.text || '';
+    console.log(`[ai-generate] success finishReason=${candidate.finishReason} textLen=${text.length}`);
+
+    if (!text) {
+      console.error('[ai-generate] Empty text. Full response:', JSON.stringify(response.data).slice(0, 500));
+      return res.status(500).json({ error: 'Empty response from AI', message: 'Gemini returned empty text' });
+    }
+
     res.json({ content: [{ type: 'text', text }] });
 
   } catch (err) {
     const msg = err.response?.data?.error?.message || err.message || 'Unknown error';
-    console.error('[ai-generate] FAILED:', msg);
-    res.status(500).json({ error: 'AI generation failed', message: msg });
+    const status = err.response?.status || 500;
+    console.error(`[ai-generate] FAILED status=${status}:`, msg);
+    console.error('[ai-generate] Full error:', JSON.stringify(err.response?.data || {}).slice(0, 500));
+    res.status(500).json({ error: 'AI generation failed', message: msg, status });
   }
 });
 

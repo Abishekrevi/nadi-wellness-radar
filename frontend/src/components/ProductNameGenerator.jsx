@@ -79,7 +79,7 @@ export default function ProductNameGenerator({ keyword, report }) {
             var clean = text.replace(/```json|```/g, '').replace(/^[^{\[]*/, '').replace(/[^}\]]*$/, '').trim()
             var parsed = JSON.parse(clean)
             setNames(parsed.names || [])
-        } catch (e) { console.error('[Could not generate names. Please try again.]', e); setError(e.message || 'Could not generate names. Please try again.') } finally {
+        } catch (e) { console.error('[Could not generate names. Please try again.]', e); setError('❌ ' + (e.message || 'Could not generate names. Please try again.')) } finally {
             setLoading(false)
         }
     }

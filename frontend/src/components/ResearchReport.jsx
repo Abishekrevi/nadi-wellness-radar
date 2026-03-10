@@ -135,7 +135,7 @@ export default function ResearchReport({ keyword, result }) {
             var retrieved = await rag.retrieve(keyword, 'research')
             setRagData(retrieved)
             // Step 2: Build prompt grounded in real sources
-            var ragContext = retrieved.context || ''
+            var ragContext = (retrieved.context || '').slice(0, 3000)
             var prompt = buildPrompt(keyword, result) + '\n\nREAL RETRIEVED SOURCES (use these to ground your answer, cite them, do not hallucinate):\n' + ragContext
             // Step 3: Generate AI response from real data
             var res = await fetch('/api/ai-generate', {
@@ -148,7 +148,7 @@ export default function ResearchReport({ keyword, result }) {
             var text = d.content?.[0]?.text || ''
             if (!text) throw new Error('Empty response from AI')
             setData(JSON.parse(text.replace(/```json|```/g, '').replace(/^[^{\[]*/, '').replace(/[^}\]]*$/, '').trim()))
-        } catch (e) { console.error('[Could not generate report. Try again.]', e); setError(e.message || 'Could not generate report. Try again.') }
+        } catch (e) { console.error('[Could not generate report. Try again.]', e); setError('❌ ' + (e.message || 'Could not generate report. Try again.')) }
         finally { setLoading(false) }
     }
 
