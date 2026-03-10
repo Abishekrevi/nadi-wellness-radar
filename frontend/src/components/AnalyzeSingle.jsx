@@ -1,43 +1,69 @@
-import { useState } from 'react'
-import FadDetector from './FadDetector.jsx'
-import EmailReport from './EmailReport.jsx'
-import ProductNameGenerator from './ProductNameGenerator.jsx'
-import SocialMediaGenerator from './SocialMediaGenerator.jsx'
-import { WatchButton } from './Watchlist.jsx'
-import PricingIntelligence from './PricingIntelligence.jsx'
-import GlobalComparison from './GlobalComparison.jsx'
+import { useState, useEffect } from 'react'
 import { AlertButton, useAlerts } from './ScoreAlert.jsx'
-import TrendNewsFeed from './TrendNewsFeed.jsx'
-import CompetitorTracker from './CompetitorTracker.jsx'
-import SupplierFinder from './SupplierFinder.jsx'
-import FormulationGuide from './FormulationGuide.jsx'
-import FundingRadar from './FundingRadar.jsx'
-import ResearchReport from './ResearchReport.jsx'
-import ReportChat from './ReportChat.jsx'
-import IndiaHeatmap from './IndiaHeatmap.jsx'
-import ScoreBadge from './ScoreBadge.jsx'
-import KeywordSuggestions from './KeywordSuggestions.jsx'
-import axios from 'axios'
+import NADIDebug from './NADIDebug.jsx'
+import { WatchButton } from './Watchlist.jsx'
 import ScoreRing from './ScoreRing.jsx'
 import TrendChart from './TrendChart.jsx'
 import DNAFingerprint from './DNAFingerprint.jsx'
 import IntelligenceReport from './IntelligenceReport.jsx'
+import ScoreBadge from './ScoreBadge.jsx'
+import KeywordSuggestions from './KeywordSuggestions.jsx'
+import FadDetector from './FadDetector.jsx'
 
-const API_URL = import.meta.env.VITE_API_URL || ''
+// Lazy-load the heavy components to prevent import-chain crashes
+var LazyComponents = null
 
-const EXAMPLES = [
+function loadLazyComponents() {
+  if (LazyComponents) return Promise.resolve()
+  return Promise.all([
+    import('./EmailReport.jsx'),
+    import('./ProductNameGenerator.jsx'),
+    import('./SocialMediaGenerator.jsx'),
+    import('./PricingIntelligence.jsx'),
+    import('./GlobalComparison.jsx'),
+    import('./TrendNewsFeed.jsx'),
+    import('./CompetitorTracker.jsx'),
+    import('./SupplierFinder.jsx'),
+    import('./FormulationGuide.jsx'),
+    import('./FundingRadar.jsx'),
+    import('./ResearchReport.jsx'),
+    import('./ReportChat.jsx'),
+    import('./IndiaHeatmap.jsx'),
+  ]).then(function (mods) {
+    LazyComponents = {
+      EmailReport: mods[0].default,
+      ProductNameGenerator: mods[1].default,
+      SocialMediaGenerator: mods[2].default,
+      PricingIntelligence: mods[3].default,
+      GlobalComparison: mods[4].default,
+      TrendNewsFeed: mods[5].default,
+      CompetitorTracker: mods[6].default,
+      SupplierFinder: mods[7].default,
+      FormulationGuide: mods[8].default,
+      FundingRadar: mods[9].default,
+      ResearchReport: mods[10].default,
+      ReportChat: mods[11].default,
+      IndiaHeatmap: mods[12].default,
+    }
+  }).catch(function (e) {
+    console.error('Failed to load lazy components:', e)
+  })
+}
+
+var API_URL = import.meta.env.VITE_API_URL || ''
+
+var EXAMPLES = [
   'berberine supplement India',
   "lion's mane mushroom India",
   'sea moss India',
   'myo-inositol PCOS India',
   'castor oil hair India',
-  'cold plunge therapy India',
   'NMN anti-aging India',
   'postbiotic skincare India',
 ]
 
-function classBadge(label = '') {
-  const l = label.toUpperCase()
+function classBadge(label) {
+  var l = (label || '').toUpperCase()
   if (l.includes('BREAKOUT')) return 'badge-breakout'
   if (l.includes('EMERGING')) return 'badge-emerging'
   if (l.includes('NASCENT')) return 'badge-nascent'
@@ -46,193 +72,259 @@ function classBadge(label = '') {
 }
 
 export default function AnalyzeSingle({ watchlist }) {
-  const [kw, setKw] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState(null)
-  const [error, setError] = useState(null)
-  const alertSystem = useAlerts()
+  var [kw, setKw] = useState('')
+  var [loading, setLoading] = useState(false)
+  var [result, setResult] = useState(null)
+  var [error, setError] = useState(null)
+  var [lazyReady, setLazyReady] = useState(false)
+  var alertSystem = useAlerts()
 
-  const analyze = async (keyword) => {
-    const target = (keyword || kw).trim()
+  // Pre-load lazy components on mount
+  useEffect(function () {
+    loadLazyComponents().then(function () { setLazyReady(true) })
+  }, [])
+
+  // Handle auto-analyze from other tabs
+  useEffect(function () {
+    if (window.__nadiAnalyzeKw) {
+      var kword = window.__nadiAnalyzeKw
+      window.__nadiAnalyzeKw = null
+      setKw(kword)
+      analyze(kword)
+    }
+  }, [])
+
+  function analyze(keyword) {
+    var target = (keyword || kw || '').trim()
     if (!target) return
     if (keyword) setKw(keyword)
-    setLoading(true); setError(null); setResult(null)
-    try {
-      const r = await axios.post(`${API_URL}/api/analyze`, { keyword: target }, { timeout: 90000 })
-      setResult(r.data)
-    } catch (e) {
-      setError(e.response?.data?.message || e.message || 'Analysis failed')
-    } finally { setLoading(false) }
+    setLoading(true)
+    setError(null)
+    setResult(null)
+
+    fetch(API_URL + '/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keyword: target }),
+    })
+      .then(function (r) { return r.json() })
+      .then(function (data) {
+        if (data.error) throw new Error(data.message || data.error)
+        setResult(data)
+      })
+      .catch(function (e) {
+        setError(e.message || 'Analysis failed. Please try again.')
+      })
+      .finally(function () {
+        setLoading(false)
+      })
   }
+
+  var L = LazyComponents
 
   return (
     <div>
-      {/* Intro */}
-      <div style={{ marginBottom: 32 }}>
+      {/* Header */}
+      <div style={{ marginBottom: 28 }}>
         <h2 style={{ fontFamily: 'var(--f-display)', fontSize: 28, marginBottom: 8, lineHeight: 1.2 }}>
           <span style={{ color: 'var(--gold)' }}>Deep Analyze</span>
-          <span style={{ color: 'var(--text-3)', fontWeight: 400 }}> — full DNA fingerprint for any signal</span>
+          <span style={{ color: 'var(--text-3)', fontWeight: 400 }}> — full DNA fingerprint</span>
         </h2>
-        <p style={{ color: 'var(--text-2)', maxWidth: 600, lineHeight: 1.7 }}>
-          Enter any wellness ingredient, practice, or product category. Live data is fetched from all sources and a founder-grade opportunity brief is generated — grounded in real signals only.
+        <p style={{ color: 'var(--text-2)', maxWidth: 600, lineHeight: 1.7, fontSize: 14 }}>
+          Enter any wellness ingredient, practice, or product. NADI scans all live sources and generates a founder-grade opportunity brief grounded in real signals only.
         </p>
       </div>
 
-      {/* Search */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-        <input type="text" value={kw} onChange={e => setKw(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && analyze()}
+      {/* Search bar */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+        <input
+          type="text"
+          value={kw}
+          onChange={function (e) { setKw(e.target.value) }}
+          onKeyDown={function (e) { if (e.key === 'Enter') analyze() }}
           placeholder="e.g. berberine supplement India"
-          style={{ fontSize: 13, flex: 1 }}
+          style={{ fontSize: 14, flex: 1 }}
+          disabled={loading}
         />
-        <button className="btn btn-primary" onClick={() => analyze()} disabled={loading || !kw.trim()} style={{ height: 42 }}>
-          {loading ? '⟳ Analyzing...' : '🧬 Analyze'}
+        <button
+          className="btn btn-primary"
+          onClick={function () { analyze() }}
+          disabled={loading || !kw.trim()}
+          style={{ height: 46, minWidth: 120 }}
+        >
+          {loading ? '⟳ Scanning...' : '🧬 Analyze'}
         </button>
       </div>
 
       {/* Example chips */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 32 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 28 }}>
         <span className="label" style={{ alignSelf: 'center' }}>Try:</span>
-        {EXAMPLES.map(e => (
-          <button key={e} className="btn btn-ghost"
-            style={{ fontSize: 10, padding: '4px 12px', textTransform: 'none', letterSpacing: 0 }}
-            onClick={() => { setKw(e); analyze(e) }} disabled={loading}
-          >
-            {e}
-          </button>
-        ))}
+        {EXAMPLES.map(function (ex) {
+          return (
+            <button
+              key={ex}
+              className="btn btn-ghost"
+              style={{ fontSize: 10, padding: '4px 12px', textTransform: 'none', letterSpacing: 0 }}
+              onClick={function () { setKw(ex); analyze(ex) }}
+              disabled={loading}
+            >
+              {ex}
+            </button>
+          )
+        })}
       </div>
 
       {/* Keyword suggestions */}
-      <KeywordSuggestions keyword={kw} onSelect={(s) => { setKw(s); analyze(s) }} disabled={loading} />
+      <KeywordSuggestions
+        keyword={kw}
+        onSelect={function (s) { setKw(s); analyze(s) }}
+        disabled={loading}
+      />
 
-      {/* Loading */}
+      {/* Loading state */}
       {loading && (
         <div className="card scan-container" style={{ padding: 48, textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontFamily: 'var(--f-display)', fontSize: 20, color: 'var(--gold)', marginBottom: 8 }}>
+          <div style={{ fontFamily: 'var(--f-display)', fontSize: 22, color: 'var(--gold)', marginBottom: 10 }}>
             🧬 Fingerprinting: <em style={{ color: 'var(--text-1)' }}>{kw}</em>
           </div>
-          <div className="mono" style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 24 }}>
+          <div className="mono" style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 20 }}>
             Scanning Reddit · YouTube · Google Trends · PubMed · Amazon India · News
           </div>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
-            {['Reddit', 'YouTube', 'Trends', 'PubMed', 'Amazon'].map((s, i) => (
-              <div key={s} className="source-chip" style={{ animation: `pulse-ring 1.8s infinite`, animationDelay: `${i * 0.3}s` }}>
-                <div className="dot" />
-                {s}
-              </div>
-            ))}
+            {['Reddit', 'YouTube', 'Trends', 'PubMed', 'Amazon', 'News'].map(function (src, i) {
+              return (
+                <div key={src} className="source-chip" style={{ animationDelay: (i * 0.25) + 's' }}>
+                  <div className="dot" style={{ animationDelay: (i * 0.25) + 's' }} />
+                  {src}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
 
-      {/* Error */}
+      {/* Error state */}
       {error && (
-        <div className="card" style={{ borderColor: 'rgba(248,113,113,0.3)', background: 'var(--red-lo)', padding: 16, marginBottom: 24 }}>
+        <div className="card" style={{ borderColor: 'rgba(255,71,87,0.3)', background: 'var(--red-lo)', padding: 16, marginBottom: 24 }}>
           <div className="mono" style={{ fontSize: 12, color: 'var(--red)' }}>⚠ {error}</div>
+          <button className="btn btn-ghost" style={{ marginTop: 10, fontSize: 11 }} onClick={function () { analyze() }}>
+            Try Again
+          </button>
         </div>
       )}
 
       {/* Result */}
       {result && !loading && (
         <div className="anim-up">
-          {/* Score header */}
-          <div className="card card-gold" style={{ padding: 24, marginBottom: 20 }}>
+
+          {/* Score card */}
+          <div className="card card-gold" style={{ padding: 24, marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-              <ScoreRing score={result.momentumAccelerationScore} size={90} />
-              <div style={{ flex: 1 }}>
+              <ScoreRing score={result.momentumAccelerationScore || 0} size={88} />
+              <div style={{ flex: 1, minWidth: 200 }}>
                 <div className="label" style={{ marginBottom: 6 }}>DNA Fingerprint Complete</div>
-                <h2 style={{ fontFamily: 'var(--f-display)', fontSize: 24, marginBottom: 8 }}>
+                <h2 style={{ fontFamily: 'var(--f-display)', fontSize: 22, marginBottom: 10 }}>
                   {result.keyword}
                 </h2>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  <span className={`badge ${classBadge(result.classification?.label)}`}>
-                    {result.classification?.emoji} {result.classification?.label}
-                  </span>
-                  <span className="badge badge-gold">{result.timeToMainstream}</span>
-                  {result.dataQuality && (
-                    <span className="badge" style={{ borderColor: result.dataQuality.color, color: result.dataQuality.color }}>
-                      Data Quality: {result.dataQuality.grade}
+                  {result.classification && (
+                    <span className={'badge ' + classBadge(result.classification.label)}>
+                      {result.classification.emoji} {result.classification.label}
                     </span>
                   )}
-                  <span className="badge" style={{ borderColor: 'var(--border-mid)', color: 'var(--text-2)' }}>
-                    {result.category}
-                  </span>
+                  {result.timeToMainstream && (
+                    <span className="badge badge-gold">{result.timeToMainstream}</span>
+                  )}
+                  {result.dataQuality && (
+                    <span className="badge" style={{ borderColor: result.dataQuality.color, color: result.dataQuality.color }}>
+                      Data: {result.dataQuality.grade}
+                    </span>
+                  )}
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div className="label" style={{ marginBottom: 4 }}>Market TAM</div>
-                <div className="mono" style={{ fontSize: 30, fontWeight: 500, color: 'var(--gold)', lineHeight: 1 }}>
-                  ₹{result.marketSizePotential?.tam}Cr
+                <div style={{ fontFamily: 'var(--f-mono)', fontSize: 28, fontWeight: 700, color: 'var(--gold)', lineHeight: 1 }}>
+                  ₹{(result.marketSizePotential && result.marketSizePotential.tam) || '—'}Cr
                 </div>
-                <div className="label" style={{ marginTop: 3 }}>{result.marketSizePotential?.horizon}</div>
+                <div className="label" style={{ marginTop: 3 }}>
+                  {(result.marketSizePotential && result.marketSizePotential.horizon) || ''}
+                </div>
               </div>
             </div>
 
             {/* Signal stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginTop: 20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 8, marginTop: 20 }}>
               {[
-                { l: 'Reddit', v: result.signals?.reddit || 0, i: '💬' },
-                { l: 'YouTube', v: result.signals?.youtube || 0, i: '▶' },
-                { l: 'News', v: result.signals?.news || 0, i: '📰' },
-                { l: 'Research', v: result.signals?.research || 0, i: '🔬' },
-                { l: 'Amazon IN', v: result.signals?.ecommerce || 0, i: '🛒' },
-              ].map(s => (
-                <div key={s.l} className="stat-box">
-                  <div style={{ fontSize: 14, marginBottom: 3 }}>{s.i}</div>
-                  <div className="stat-val">{s.v}</div>
-                  <div className="stat-label">{s.l}</div>
-                </div>
-              ))}
+                { l: 'Reddit', v: (result.signals && result.signals.reddit) || 0, i: '💬' },
+                { l: 'YouTube', v: (result.signals && result.signals.youtube) || 0, i: '▶' },
+                { l: 'News', v: (result.signals && result.signals.news) || 0, i: '📰' },
+                { l: 'Research', v: (result.signals && result.signals.research) || 0, i: '🔬' },
+                { l: 'Amazon IN', v: (result.signals && result.signals.ecommerce) || 0, i: '🛒' },
+              ].map(function (s) {
+                return (
+                  <div key={s.l} className="stat-box">
+                    <div style={{ fontSize: 16, marginBottom: 4 }}>{s.i}</div>
+                    <div className="stat-val">{s.v}</div>
+                    <div className="stat-label">{s.l}</div>
+                  </div>
+                )
+              })}
             </div>
           </div>
 
-          {/* Charts + DNA grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+          {/* Charts row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
             <div className="card" style={{ padding: 20 }}>
-              <div className="label" style={{ marginBottom: 12 }}>Google Trends — India (12 months)</div>
-              <TrendChart data={result.signals?.searchTrend} height={140} color="var(--gold)" />
-              <div className="mono" style={{ fontSize: 11, textAlign: 'center', marginTop: 10 }}>
-                Search momentum:{' '}
-                <span style={{ color: (result.signals?.searchMomentum || 0) >= 0 ? 'var(--teal)' : 'var(--red)', fontWeight: 500 }}>
-                  {(result.signals?.searchMomentum || 0) >= 0 ? '+' : ''}{result.signals?.searchMomentum || 0}%
+              <div className="label" style={{ marginBottom: 12 }}>Google Trends — India (12mo)</div>
+              <TrendChart
+                data={result.signals && result.signals.searchTrend}
+                height={130}
+                color="var(--gold)"
+              />
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: 11, textAlign: 'center', marginTop: 8 }}>
+                Momentum:{' '}
+                <span style={{ color: ((result.signals && result.signals.searchMomentum) || 0) >= 0 ? 'var(--teal)' : 'var(--red)', fontWeight: 600 }}>
+                  {((result.signals && result.signals.searchMomentum) || 0) >= 0 ? '+' : ''}
+                  {(result.signals && result.signals.searchMomentum) || 0}%
                 </span>
               </div>
             </div>
-
             <div className="card" style={{ padding: 20 }}>
               <div className="label" style={{ marginBottom: 12 }}>DNA Fingerprint — 8 Strands</div>
               <DNAFingerprint
-                strands={result.dnaFingerprint?.strands}
-                historicalMatch={result.dnaFingerprint?.historicalMatch}
+                strands={result.dnaFingerprint && result.dnaFingerprint.strands}
+                historicalMatch={result.dnaFingerprint && result.dnaFingerprint.historicalMatch}
               />
             </div>
           </div>
 
           {/* Source attribution */}
-          {result.sourceAttribution?.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <div className="label" style={{ marginBottom: 8 }}>Live data sources confirmed</div>
+          {result.sourceAttribution && result.sourceAttribution.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <div className="label" style={{ marginBottom: 8 }}>Live data sources</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-                {result.sourceAttribution.map(s => (
-                  <div key={s.platform} className="source-chip">
-                    <div className="dot" />
-                    {s.platform}: <strong style={{ color: 'var(--text-1)', marginLeft: 3 }}>{s.mentions}</strong>
-                  </div>
-                ))}
+                {result.sourceAttribution.map(function (s) {
+                  return (
+                    <div key={s.platform} className="source-chip">
+                      <div className="dot" />
+                      {s.platform}: <strong style={{ color: 'var(--text-1)', marginLeft: 3 }}>{s.mentions}</strong>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
 
           {/* Fad Detector */}
           <FadDetector
-            score={result.momentumAccelerationScore}
-            strands={result.dnaFingerprint?.strands}
+            score={result.momentumAccelerationScore || 0}
+            strands={result.dnaFingerprint && result.dnaFingerprint.strands}
             keyword={result.keyword}
           />
 
           {/* Intelligence Report */}
-          <div className="card" style={{ padding: 24 }}>
+          <div className="card" style={{ padding: 24, marginTop: 14 }}>
             <div className="label" style={{ marginBottom: 16 }}>🤖 AI Intelligence Report — Founder Opportunity Brief</div>
             <IntelligenceReport
               report={result.intelligenceReport}
@@ -240,25 +332,37 @@ export default function AnalyzeSingle({ watchlist }) {
               marketSize={result.marketSizePotential}
               fullResult={result}
             />
-            <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
-              {watchlist && <WatchButton result={result} watchlist={watchlist} />}
-              <AlertButton keyword={result.keyword} currentScore={result.momentumAccelerationScore} alerts={alertSystem} />
-              <EmailReport result={result} />
-              <PricingIntelligence keyword={result.keyword} result={result} />
-              <GlobalComparison keyword={result.keyword} result={result} />
-              <TrendNewsFeed keyword={result.keyword} />
-              <CompetitorTracker keyword={result.keyword} result={result} />
-              <SupplierFinder keyword={result.keyword} result={result} />
-              <FormulationGuide keyword={result.keyword} result={result} />
-              <FundingRadar keyword={result.keyword} result={result} />
-              <ResearchReport keyword={result.keyword} result={result} />
-              <ProductNameGenerator keyword={result.keyword} report={result.intelligenceReport} />
-              <SocialMediaGenerator keyword={result.keyword} result={result} />
-            </div>
+
+            {/* Action buttons — only rendered once lazy components are loaded */}
+            {lazyReady && L && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+                {watchlist && <WatchButton result={result} watchlist={watchlist} />}
+                <AlertButton keyword={result.keyword} currentScore={result.momentumAccelerationScore || 0} alerts={alertSystem} />
+                <L.EmailReport result={result} />
+                <NADIDebug keyword={result.keyword} />
+                <L.PricingIntelligence keyword={result.keyword} result={result} />
+                <L.GlobalComparison keyword={result.keyword} result={result} />
+                <L.TrendNewsFeed keyword={result.keyword} />
+                <L.CompetitorTracker keyword={result.keyword} result={result} />
+                <L.SupplierFinder keyword={result.keyword} result={result} />
+                <L.FormulationGuide keyword={result.keyword} result={result} />
+                <L.FundingRadar keyword={result.keyword} result={result} />
+                <L.ResearchReport keyword={result.keyword} result={result} />
+                <L.ProductNameGenerator keyword={result.keyword} report={result.intelligenceReport} />
+                <L.SocialMediaGenerator keyword={result.keyword} result={result} />
+              </div>
+            )}
+
             <ScoreBadge result={result} />
-            <IndiaHeatmap keyword={result.keyword} score={result.momentumAccelerationScore} />
-            <ReportChat result={result} />
+
+            {lazyReady && L && (
+              <>
+                <L.IndiaHeatmap keyword={result.keyword} score={result.momentumAccelerationScore || 0} />
+                <L.ReportChat result={result} />
+              </>
+            )}
           </div>
+
         </div>
       )}
     </div>
