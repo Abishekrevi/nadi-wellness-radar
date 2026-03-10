@@ -84,7 +84,7 @@ app.get('/api/ai-test', async (_req, res) => {
     return res.json({ status: 'FAIL', reason: 'GEMINI_API_KEY not set in environment', keyLength: (geminiKey || '').length });
   try {
     const r = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
       {
         contents: [{ parts: [{ text: 'Reply with exactly this JSON and nothing else: {"ok":true,"status":"working"}' }] }],
         generationConfig: { maxOutputTokens: 100, temperature: 0 }
@@ -439,7 +439,7 @@ app.post('/api/ai-generate', async (req, res) => {
     };
 
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
       body,
       { headers: { 'Content-Type': 'application/json' }, timeout: 60000 }
     );

@@ -81,7 +81,7 @@ Return ONLY a valid JSON object. No markdown, no backticks, no explanation text 
 
   try {
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         contents: [{
           parts: [{ text: fullPrompt }]
@@ -141,10 +141,10 @@ function generateTemplatedReport(trendData, masResult) {
   const score = masResult.score;
   const classification = masResult.classification;
   const isAyurvedic = trendData.hasAyurvedicBacking;
-  
+
   let verdict = 'WATCH';
   let verdictReason = 'Signals are building but need confirmation across more platforms.';
-  
+
   if (score >= 75) {
     verdict = 'STRONG BUY';
     verdictReason = `High momentum with ${masResult.confidence} confidence data — first-mover window is now.`;
@@ -157,53 +157,53 @@ function generateTemplatedReport(trendData, masResult) {
   }
 
   const productIdeas = generateProductIdeas(keyword, isAyurvedic, trendData.avgPricePoint);
-  
+
   return {
     executive_summary: `${keyword} is showing ${classification.label.toLowerCase()} characteristics in the Indian wellness market with a Momentum Acceleration Score of ${score}/100. ${trendData.redditMentions + trendData.newsMentions} combined media mentions detected across monitored sources in the last 30 days. ${isAyurvedic ? 'Strong Ayurvedic validation provides a unique moat for Indian brands.' : 'Opportunity exists to anchor this trend in Indian wellness traditions.'}`,
-    
+
     why_now: `Search momentum of ${trendData.searchMomentum > 0 ? '+' : ''}${trendData.searchMomentum}% indicates ${trendData.searchMomentum > 20 ? 'accelerating' : 'building'} consumer interest. ${trendData.researchMentions} PubMed papers provide scientific validation that typically precedes consumer mainstream adoption by 12-18 months. Post-COVID Indian consumers are actively seeking ${isAyurvedic ? 'traditional remedies backed by science' : 'evidence-based natural wellness solutions'}.`,
-    
+
     target_consumer: `Urban Indian, 25-40 years, household income ₹8-25L, actively researching wellness on social media. ${trendData.redditMentions > 20 ? 'High Reddit activity suggests early-adopter, research-driven consumer — ideal for building authentic brand voice.' : 'Relatively untapped on social platforms — opportunity to educate and own the conversation.'} Likely female-skewing (60-65%) based on category patterns.`,
-    
+
     market_gap: `Only ${trendData.indianBrandAdoption} Indian brands currently offer ${keyword} products on Amazon India, suggesting ${trendData.indianBrandAdoption < 3 ? 'a largely untapped market with no dominant Indian brand yet' : 'early competition but no clear category leader yet'}. No brand has combined ${keyword} with ${isAyurvedic ? 'modern bioavailability science' : 'traditional Indian wellness wisdom'}.`,
-    
+
     product_opportunity: productIdeas,
-    
+
     competitive_moat: `Build defensibility through: (1) Original research partnerships with Indian Ayurvedic universities for clinical validation; (2) Quality certifications — AYUSH Premium Mark + third-party testing; (3) Community-first approach — own the online conversation before competition arrives; (4) Sourcing relationships with Indian farmers/cooperatives for supply chain moat.`,
-    
+
     risk_assessment: `Risk 1: If global trend doesn't translate to India (mitigation: A/B test with small batch, DTC-first). Risk 2: Regulatory changes by FSSAI on health claims (mitigation: conservative claims, focus on wellness not medicine). Risk 3: Competition from established Ayurvedic brands with distribution advantage (mitigation: digital-first, community-built brand that incumbents can't replicate).`,
-    
+
     go_to_market: `Days 1-30: Launch micro-DTC on website + Instagram. Create educational content around ${keyword} backed by data. Partner with 3-5 credentialed nutritionists/doctors for authentic endorsement. Days 31-60: Launch on Amazon India + Meesho for reach. Target Tier-1 city WhatsApp health groups. Days 61-90: Scale what's working. Aim for ₹5L MRR before scaling paid ads.`,
-    
+
     revenue_model: `Primary: Direct DTC product sales (₹${Math.max(200, trendData.avgPricePoint - 100)}-${trendData.avgPricePoint + 200} price point). Secondary: Monthly subscription model (15-20% margin uplift). Tertiary: White-label B2B for other wellness brands. Goal: ₹1Cr ARR within 12 months of launch with 40%+ gross margins.`,
-    
+
     signal_evidence: `Key evidence: ${trendData.redditMentions} Reddit mentions (organic consumer discussion), ${trendData.researchMentions} academic papers (scientific validation), ${trendData.ecommerceProducts} Amazon products (market exists but uncrowded), ${trendData.searchMomentum > 0 ? '+' + trendData.searchMomentum + '% search momentum' : trendData.searchMomentum + '% search momentum'}, DNA Fingerprint similarity to ${masResult.historicalPattern?.closestTrend?.name || 'known successful trends'} (${masResult.historicalPattern?.trendScore || 0}% match).`,
-    
+
     verdict,
     confidence_level: masResult.confidence,
-    action_timeline: score >= 75 ? 'Act within 30 days — window is open NOW' : 
-                     score >= 60 ? 'Act within 60-90 days — early mover window' : 
-                     'Monitor for 60 more days before committing resources',
+    action_timeline: score >= 75 ? 'Act within 30 days — window is open NOW' :
+      score >= 60 ? 'Act within 60-90 days — early mover window' :
+        'Monitor for 60 more days before committing resources',
   };
 }
 
 function generateProductIdeas(keyword, isAyurvedic, pricePoint) {
   const ideas = [];
   const kw = keyword.toLowerCase();
-  
+
   // Supplement idea
   ideas.push(`1. ${keyword} Premium Supplement — Bioavailability-enhanced formula (liposomal or with piperine), priced at ₹${Math.round(pricePoint / 100) * 100 + 200}-${Math.round(pricePoint / 100) * 100 + 500}/month supply. USP: Third-party tested, FSSAI-approved, transparent sourcing. Targeting: ₹30Cr TAM opportunity.`);
-  
+
   // Functional food/drink idea
   if (isAyurvedic) {
     ideas.push(`2. ${keyword} Wellness Shots — 30ml daily shot format combining ${keyword} with complementary adaptogens. ₹600-800 for 30-day supply. Modern format with traditional wisdom positioning. Target: ₹800Cr functional beverages market.`);
   } else {
     ideas.push(`2. ${keyword}-Infused Functional Food — RTD format (powder or gummies) for modern Indian consumer. ₹400-600 price point. Mass-market positioning. Target: First-mover in this specific format in India.`);
   }
-  
+
   // Knowledge/community idea
   ideas.push(`3. ${keyword} Wellness Protocol — Subscription program combining product + personalized guidance + community. ₹1,500-2,500/month. High retention model. 12-month value: ₹18-30K per subscriber.`);
-  
+
   return ideas.join('\n\n');
 }
 
