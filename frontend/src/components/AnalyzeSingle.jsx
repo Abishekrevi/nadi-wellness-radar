@@ -8,6 +8,11 @@ import PricingIntelligence from './PricingIntelligence.jsx'
 import GlobalComparison from './GlobalComparison.jsx'
 import { AlertButton, useAlerts } from './ScoreAlert.jsx'
 import TrendNewsFeed from './TrendNewsFeed.jsx'
+import CompetitorTracker from './CompetitorTracker.jsx'
+import SupplierFinder from './SupplierFinder.jsx'
+import FormulationGuide from './FormulationGuide.jsx'
+import FundingRadar from './FundingRadar.jsx'
+import ResearchReport from './ResearchReport.jsx'
 import ReportChat from './ReportChat.jsx'
 import IndiaHeatmap from './IndiaHeatmap.jsx'
 import ScoreBadge from './ScoreBadge.jsx'
@@ -241,6 +246,11 @@ export default function AnalyzeSingle({ watchlist }) {
               <PricingIntelligence keyword={result.keyword} result={result} />
               <GlobalComparison keyword={result.keyword} result={result} />
               <TrendNewsFeed keyword={result.keyword} />
+              <CompetitorTracker keyword={result.keyword} result={result} />
+              <SupplierFinder keyword={result.keyword} result={result} />
+              <FormulationGuide keyword={result.keyword} result={result} />
+              <FundingRadar keyword={result.keyword} result={result} />
+              <ResearchReport keyword={result.keyword} result={result} />
               <ProductNameGenerator keyword={result.keyword} report={result.intelligenceReport} />
               <SocialMediaGenerator keyword={result.keyword} result={result} />
             </div>
