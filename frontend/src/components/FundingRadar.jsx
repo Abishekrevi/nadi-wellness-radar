@@ -73,13 +73,10 @@ export default function FundingRadar({ keyword, result }) {
             var basePrompt = buildPrompt(keyword, result || {})
             var prompt = basePrompt + '\n\nREAL RETRIEVED SOURCES (ground your answer in these, do not hallucinate):\n' + ragContext
             // Step 2: AI answers from real data
-            var res = await fetch('https://api.anthropic.com/v1/messages', {
+            var res = await fetch('/api/ai-generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: 'claude-sonnet-4-20250514', max_tokens: 1500,
-                    messages: [{ role: 'user', content: prompt }],
-                }),
+                body: JSON.stringify({ prompt: prompt, max_tokens: 1500 }),
             })
             var d = await res.json()
             var text = d.content?.[0]?.text || ''

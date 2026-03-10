@@ -368,6 +368,46 @@ process.on('SIGTERM', () => { console.log('Graceful shutdown.'); process.exit(0)
 process.on('uncaughtException', e => console.error('[uncaughtException]', e.message));
 process.on('unhandledRejection', e => console.error('[unhandledRejection]', e));
 
+
+// ── AI Generate proxy — routes frontend AI calls through backend (avoids CORS) ──
+app.post('/api/ai-generate', async (req, res) => {
+  const { prompt, max_tokens, system } = req.body || {};
+  if (!prompt || typeof prompt !== 'string')
+    return res.status(400).json({ error: 'prompt required' });
+
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (!geminiKey || geminiKey.length < 10)
+    return res.status(500).json({ error: 'AI API key not configured' });
+
+  try {
+    const fullPrompt = system ? system + '\n\n' + prompt : prompt;
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+      {
+        contents: [{ parts: [{ text: fullPrompt }] }],
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: Math.min(max_tokens || 1500, 8000),
+        },
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+        ],
+      },
+      { headers: { 'Content-Type': 'application/json' }, timeout: 45000 }
+    );
+
+    const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    // Return in same format as Anthropic API so frontend code works unchanged
+    res.json({ content: [{ type: 'text', text }] });
+  } catch (err) {
+    console.error('[ai-generate]', err.response?.data?.error?.message || err.message);
+    res.status(500).json({ error: 'AI generation failed', message: err.response?.data?.error?.message || err.message });
+  }
+});
+
 app.listen(PORT, () => console.log(`\n🧬  NADI v2.0 running → http://localhost:${PORT}\n`));
 module.exports = app;
 

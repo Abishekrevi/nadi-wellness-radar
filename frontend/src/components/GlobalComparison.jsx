@@ -56,14 +56,10 @@ export default function GlobalComparison({ keyword, result }) {
         setLoading(true)
         setError(null)
         try {
-            var response = await fetch('https://api.anthropic.com/v1/messages', {
+            var response = await fetch('/api/ai-generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: 'claude-sonnet-4-20250514',
-                    max_tokens: 1000,
-                    messages: [{ role: 'user', content: buildPrompt(keyword) }],
-                }),
+                body: JSON.stringify({ prompt: buildPrompt(keyword), max_tokens: 1000 }),
             })
             var res = await response.json()
             var text = res.content && res.content[0] ? res.content[0].text : ''

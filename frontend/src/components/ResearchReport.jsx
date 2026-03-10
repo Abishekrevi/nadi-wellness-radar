@@ -138,13 +138,10 @@ export default function ResearchReport({ keyword, result }) {
             var ragContext = retrieved.context || ''
             var prompt = buildPrompt(keyword, result) + '\n\nREAL RETRIEVED SOURCES (use these to ground your answer, cite them, do not hallucinate):\n' + ragContext
             // Step 3: Generate AI response from real data
-            var res = await fetch('https://api.anthropic.com/v1/messages', {
+            var res = await fetch('/api/ai-generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: 'claude-sonnet-4-20250514', max_tokens: 4000,
-                    messages: [{ role: 'user', content: prompt }],
-                }),
+                body: JSON.stringify({ prompt: prompt, max_tokens: 4000 }),
             })
             var d = await res.json()
             var text = d.content?.[0]?.text || ''
