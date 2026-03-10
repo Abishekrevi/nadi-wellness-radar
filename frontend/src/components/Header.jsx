@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import TrendTicker from './TrendTicker.jsx'
 
 const API_URL = import.meta.env.VITE_API_URL || ''
 
@@ -7,11 +8,11 @@ export default function Header() {
   const [apiStatus, setApiStatus] = useState(null)
 
   useEffect(() => {
-    axios.get(`${API_URL}/api/health`).then(r => setApiStatus(r.data)).catch(() => {})
+    axios.get(`${API_URL}/api/health`).then(r => setApiStatus(r.data)).catch(() => { })
   }, [])
 
   return (
-    <header style={{
+    <> style={{
       borderBottom: '1px solid var(--border-dim)',
       background: 'rgba(7,11,15,0.92)',
       backdropFilter: 'blur(16px)',
@@ -30,17 +31,17 @@ export default function Header() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           {/* DNA icon */}
           <svg width="28" height="36" viewBox="0 0 28 36" fill="none">
-            <path d="M4 2 C4 2 14 9 24 2"    stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-            <path d="M4 9 C4 9 14 16 24 9"   stroke="#2DD4BF" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-            <path d="M4 16 C4 16 14 23 24 16" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-            <path d="M4 23 C4 23 14 30 24 23" stroke="#2DD4BF" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-            <path d="M4 30 C4 30 14 37 24 30" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-            <line x1="4"  y1="2"  x2="4"  y2="34" stroke="#C9A84C" strokeWidth="1" opacity="0.35"/>
-            <line x1="24" y1="2"  x2="24" y2="34" stroke="#2DD4BF" strokeWidth="1" opacity="0.35"/>
-            <circle cx="4"  cy="5.5"  r="2" fill="#C9A84C"/>
-            <circle cx="24" cy="12.5" r="2" fill="#2DD4BF"/>
-            <circle cx="4"  cy="19.5" r="2" fill="#C9A84C"/>
-            <circle cx="24" cy="26.5" r="2" fill="#2DD4BF"/>
+            <path d="M4 2 C4 2 14 9 24 2" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+            <path d="M4 9 C4 9 14 16 24 9" stroke="#2DD4BF" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+            <path d="M4 16 C4 16 14 23 24 16" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+            <path d="M4 23 C4 23 14 30 24 23" stroke="#2DD4BF" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+            <path d="M4 30 C4 30 14 37 24 30" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+            <line x1="4" y1="2" x2="4" y2="34" stroke="#C9A84C" strokeWidth="1" opacity="0.35" />
+            <line x1="24" y1="2" x2="24" y2="34" stroke="#2DD4BF" strokeWidth="1" opacity="0.35" />
+            <circle cx="4" cy="5.5" r="2" fill="#C9A84C" />
+            <circle cx="24" cy="12.5" r="2" fill="#2DD4BF" />
+            <circle cx="4" cy="19.5" r="2" fill="#C9A84C" />
+            <circle cx="24" cy="26.5" r="2" fill="#2DD4BF" />
           </svg>
 
           <div>
@@ -134,6 +135,8 @@ export default function Header() {
           </div>
         </div>
       </div>
-    </header>
+    </header >
+      <TrendTicker />
+  </>
   )
 }

@@ -1,5 +1,9 @@
 import { useState } from 'react'
 import FadDetector from './FadDetector.jsx'
+import EmailReport from './EmailReport.jsx'
+import ProductNameGenerator from './ProductNameGenerator.jsx'
+import SocialMediaGenerator from './SocialMediaGenerator.jsx'
+import { WatchButton } from './Watchlist.jsx'
 import ReportChat from './ReportChat.jsx'
 import IndiaHeatmap from './IndiaHeatmap.jsx'
 import ScoreBadge from './ScoreBadge.jsx'
@@ -32,7 +36,7 @@ function classBadge(label = '') {
   return 'badge-noise'
 }
 
-export default function AnalyzeSingle() {
+export default function AnalyzeSingle({ watchlist }) {
   const [kw, setKw] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
@@ -226,6 +230,12 @@ export default function AnalyzeSingle() {
               marketSize={result.marketSizePotential}
               fullResult={result}
             />
+            <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
+              {watchlist && <WatchButton result={result} watchlist={watchlist} />}
+              <EmailReport result={result} />
+              <ProductNameGenerator keyword={result.keyword} report={result.intelligenceReport} />
+              <SocialMediaGenerator keyword={result.keyword} result={result} />
+            </div>
             <ScoreBadge result={result} />
             <IndiaHeatmap keyword={result.keyword} score={result.momentumAccelerationScore} />
             <ReportChat result={result} />
