@@ -1,4 +1,4 @@
-import { useRAG, SourcePanel, RAGStatus } from '../utils/useRAG.js'
+import { useRAG, SourcePanel, RAGStatus } from '../utils/useRAG.jsx'
 import { useState } from 'react'
 
 function buildPrompt(keyword, result) {
