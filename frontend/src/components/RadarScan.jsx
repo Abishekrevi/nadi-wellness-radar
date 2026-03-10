@@ -4,7 +4,7 @@ import TrendChart from './TrendChart.jsx'
 import DNAFingerprint from './DNAFingerprint.jsx'
 import IntelligenceReport from './IntelligenceReport.jsx'
 import { exportReportToPDF } from '../utils/pdfExport.js'
-
+import { downloadPitchDeck } from '../utils/pitchDeckExport.js'
 
 const API_URL = import.meta.env.VITE_API_URL || ''
 
@@ -49,14 +49,14 @@ function TrendCard({ result, rank, selected, onSelect }) {
       {/* Top row */}
       <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 14 }}>
         <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-          <ScoreRing score={score} size={60} />
+          <ScoreRing score={score} size={70} />
           <div className="mono" style={{ fontSize: 9, color: 'var(--text-3)' }}>#{rank}</div>
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
             fontFamily: 'var(--f-display)',
-            fontWeight: 700,
-            fontSize: 15,
+            fontWeight: 800,
+            fontSize: 18,
             color: 'var(--text-1)',
             lineHeight: 1.3,
             marginBottom: 6,
@@ -212,12 +212,12 @@ export default function RadarScan() {
   return (
     <div>
       {/* Intro */}
-      <div style={{ marginBottom: 32 }}>
-        <h2 style={{ fontFamily: 'var(--f-display)', fontSize: 28, marginBottom: 8, lineHeight: 1.2 }}>
-          <span style={{ color: 'var(--gold)' }}>Wellness Radar</span>
-          <span style={{ color: 'var(--text-3)', fontWeight: 400 }}> — identify breakout trends 6 months early</span>
+      <div style={{ marginBottom: 36 }}>
+        <h2 style={{ fontFamily: 'var(--f-display)', fontSize: 36, fontWeight: 800, marginBottom: 12, lineHeight: 1.15, letterSpacing: '-0.02em' }}>
+          <span style={{ background: 'linear-gradient(135deg, #FFE066, #F5C842)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Wellness Radar</span>
+          <span style={{ color: 'var(--text-2)', fontWeight: 400 }}> — Identify breakout trends 6 months early</span>
         </h2>
-        <p style={{ color: 'var(--text-2)', maxWidth: 680, lineHeight: 1.7 }}>
+        <p style={{ color: 'var(--text-2)', maxWidth: 680, lineHeight: 1.7, fontSize: 16 }}>
           NADI scans <strong style={{ color: 'var(--text-1)' }}>1,000+ live sources</strong> — Reddit, YouTube, Google Trends, PubMed, Amazon India.
           Each trend is DNA-fingerprinted across 8 signal strands to distinguish real market shifts from fads.
         </p>
@@ -261,7 +261,7 @@ export default function RadarScan() {
       {/* Live progress */}
       {scanning && progress.length > 0 && (
         <div className="card scan-container" style={{ padding: 24, marginBottom: 24 }}>
-          <div style={{ fontFamily: 'var(--f-display)', fontSize: 18, color: 'var(--gold)', marginBottom: 4 }}>
+          <div style={{ fontFamily: 'var(--f-display)', fontSize: 24, fontWeight: 800, color: 'var(--gold)', marginBottom: 6 }}>
             🧬 DNA Fingerprinting in progress
           </div>
           <div className="mono" style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 20 }}>
@@ -338,7 +338,9 @@ export default function RadarScan() {
               {results.topTrend && (
                 <button
                   className="pdf-btn"
+                  data-pitchdeck-btn="true"
                   style={{ background: 'rgba(45,212,191,0.1)', borderColor: 'rgba(45,212,191,0.3)', color: 'var(--teal)' }}
+                  onClick={() => downloadPitchDeck(results.topTrend)}
                 >
                   📊 Pitch Deck
                 </button>
@@ -467,8 +469,8 @@ export default function RadarScan() {
       {/* Empty state */}
       {!scanning && !results && !error && (
         <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-          <div style={{ fontSize: 52, marginBottom: 16, opacity: 0.35 }}>🧬</div>
-          <div style={{ fontFamily: 'var(--f-display)', fontSize: 22, marginBottom: 8, color: 'var(--text-2)' }}>
+          <div style={{ fontSize: 72, marginBottom: 20 }}>🧬</div>
+          <div style={{ fontFamily: 'var(--f-display)', fontSize: 30, fontWeight: 800, marginBottom: 12, color: 'var(--text-1)' }}>
             Ready to scan the Indian wellness market
           </div>
           <div className="mono" style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 28 }}>

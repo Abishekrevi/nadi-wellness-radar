@@ -5,18 +5,18 @@ import TrendTicker from './TrendTicker.jsx'
 const API_URL = import.meta.env.VITE_API_URL || ''
 
 export default function Header() {
-  const [apiStatus, setApiStatus] = useState(null)
+  var [apiStatus, setApiStatus] = useState(null)
 
-  useEffect(() => {
-    axios.get(`${API_URL}/api/health`).then(r => setApiStatus(r.data)).catch(() => { })
+  useEffect(function () {
+    axios.get(API_URL + '/api/health').then(function (r) { setApiStatus(r.data) }).catch(function () { })
   }, [])
 
   return (
     <>
       <header style={{
-        borderBottom: '1px solid var(--border-dim)',
-        background: 'rgba(7,11,15,0.92)',
-        backdropFilter: 'blur(16px)',
+        borderBottom: '1px solid rgba(245,200,66,0.12)',
+        background: 'rgba(5,8,16,0.95)',
+        backdropFilter: 'blur(24px)',
         position: 'sticky',
         top: 0,
         zIndex: 200,
@@ -25,113 +25,88 @@ export default function Header() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          height: 64,
+          height: 72,
           gap: 20,
         }}>
-          {/* ── Logo ── */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            {/* DNA icon */}
-            <svg width="28" height="36" viewBox="0 0 28 36" fill="none">
-              <path d="M4 2 C4 2 14 9 24 2" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-              <path d="M4 9 C4 9 14 16 24 9" stroke="#2DD4BF" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-              <path d="M4 16 C4 16 14 23 24 16" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-              <path d="M4 23 C4 23 14 30 24 23" stroke="#2DD4BF" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-              <path d="M4 30 C4 30 14 37 24 30" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-              <line x1="4" y1="2" x2="4" y2="34" stroke="#C9A84C" strokeWidth="1" opacity="0.35" />
-              <line x1="24" y1="2" x2="24" y2="34" stroke="#2DD4BF" strokeWidth="1" opacity="0.35" />
-              <circle cx="4" cy="5.5" r="2" fill="#C9A84C" />
-              <circle cx="24" cy="12.5" r="2" fill="#2DD4BF" />
-              <circle cx="4" cy="19.5" r="2" fill="#C9A84C" />
-              <circle cx="24" cy="26.5" r="2" fill="#2DD4BF" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <svg width="32" height="42" viewBox="0 0 32 42" fill="none">
+              <path d="M4 2 C4 2 16 11 28 2" stroke="#F5C842" strokeWidth="2" fill="none" strokeLinecap="round" />
+              <path d="M4 10 C4 10 16 19 28 10" stroke="#00E5CC" strokeWidth="2" fill="none" strokeLinecap="round" />
+              <path d="M4 18 C4 18 16 27 28 18" stroke="#F5C842" strokeWidth="2" fill="none" strokeLinecap="round" />
+              <path d="M4 26 C4 26 16 35 28 26" stroke="#00E5CC" strokeWidth="2" fill="none" strokeLinecap="round" />
+              <path d="M4 34 C4 34 16 43 28 34" stroke="#F5C842" strokeWidth="2" fill="none" strokeLinecap="round" />
+              <line x1="4" y1="2" x2="4" y2="40" stroke="#F5C842" strokeWidth="1.5" opacity="0.3" />
+              <line x1="28" y1="2" x2="28" y2="40" stroke="#00E5CC" strokeWidth="1.5" opacity="0.3" />
+              <circle cx="4" cy="6" r="2.5" fill="#F5C842" />
+              <circle cx="28" cy="14" r="2.5" fill="#00E5CC" />
+              <circle cx="4" cy="22" r="2.5" fill="#F5C842" />
+              <circle cx="28" cy="30" r="2.5" fill="#00E5CC" />
             </svg>
-
             <div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
                 <span style={{
                   fontFamily: 'var(--f-display)',
-                  fontWeight: 900,
-                  fontSize: 22,
-                  color: 'var(--gold)',
-                  letterSpacing: '0.06em',
+                  fontWeight: 800,
+                  fontSize: 28,
+                  background: 'linear-gradient(135deg, #FFE066 0%, #F5C842 60%, #C49A1E 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  letterSpacing: '-0.01em',
                   lineHeight: 1,
                 }}>
                   NADI
                 </span>
-                <span className="mono" style={{ fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.1em' }}>
-                  v2.0
+                <span style={{
+                  fontFamily: 'var(--f-mono)',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: 'var(--text-3)',
+                  letterSpacing: '0.1em',
+                  background: 'rgba(245,200,66,0.1)',
+                  border: '1px solid rgba(245,200,66,0.2)',
+                  padding: '2px 7px',
+                  borderRadius: 4,
+                }}>
+                  v3.0
                 </span>
               </div>
-              <div className="mono" style={{
+              <div style={{
+                fontFamily: 'var(--f-mono)',
                 fontSize: 9,
+                fontWeight: 700,
                 color: 'var(--text-3)',
-                letterSpacing: '0.14em',
+                letterSpacing: '0.18em',
                 lineHeight: 1,
-                marginTop: 3,
+                marginTop: 4,
+                textTransform: 'uppercase',
               }}>
-                NEURAL AYURVEDIC &amp; DIGITAL INTELLIGENCE
+                Neural Ayurvedic & Digital Intelligence
               </div>
             </div>
           </div>
 
-          {/* ── Status bar ── */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-            {/* Live indicator */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div className="pulse-dot" />
-              <span className="mono" style={{ fontSize: 10, color: 'var(--text-2)', letterSpacing: '0.1em' }}>
-                LIVE
-              </span>
+              <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, fontWeight: 700, color: 'var(--teal)', letterSpacing: '0.12em' }}>LIVE</span>
             </div>
-
-            {/* Source count */}
-            <div style={{
-              padding: '5px 12px',
-              background: 'var(--bg-raised)',
-              border: '1px solid var(--border-dim)',
-              borderRadius: 'var(--radius)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            }}>
-              <span className="mono" style={{ fontSize: 13, fontWeight: 500, color: 'var(--gold)', lineHeight: 1 }}>
-                1,000+
-              </span>
-              <span className="mono" style={{ fontSize: 8, color: 'var(--text-3)', letterSpacing: '0.1em', marginTop: 2 }}>
-                SOURCES
-              </span>
+            <div style={{ padding: '7px 14px', background: 'var(--bg-raised)', border: '1px solid var(--border-dim)', borderRadius: 'var(--radius)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <span style={{ fontFamily: 'var(--f-display)', fontSize: 16, fontWeight: 800, color: 'var(--gold)', lineHeight: 1 }}>1,000+</span>
+              <span style={{ fontFamily: 'var(--f-mono)', fontSize: 8, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.12em', marginTop: 3 }}>SOURCES</span>
             </div>
-
-            {/* API status pills */}
             {apiStatus && (
               <div className="hide-mobile" style={{ display: 'flex', gap: 6 }}>
-                {Object.entries(apiStatus.apis || {}).map(([name, ok]) => (
-                  <div key={name} style={{
-                    padding: '3px 8px',
-                    background: ok ? 'rgba(45,212,191,0.08)' : 'rgba(248,113,113,0.08)',
-                    border: `1px solid ${ok ? 'rgba(45,212,191,0.2)' : 'rgba(248,113,113,0.2)'}`,
-                    borderRadius: 'var(--radius)',
-                    fontFamily: 'var(--f-mono)',
-                    fontSize: 9,
-                    color: ok ? 'var(--teal)' : 'var(--red)',
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                  }}>
-                    {ok ? '●' : '○'} {name}
-                  </div>
-                ))}
+                {Object.entries(apiStatus.apis || {}).map(function ([name, ok]) {
+                  return (
+                    <div key={name} style={{ padding: '4px 10px', background: ok ? 'rgba(0,229,204,0.08)' : 'rgba(255,92,92,0.08)', border: '1px solid ' + (ok ? 'rgba(0,229,204,0.2)' : 'rgba(255,92,92,0.2)'), borderRadius: 6, fontFamily: 'var(--f-mono)', fontSize: 9, fontWeight: 700, color: ok ? 'var(--teal)' : 'var(--red)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                      {ok ? '●' : '○'} {name}
+                    </div>
+                  )
+                })}
               </div>
             )}
-
-            {/* India badge */}
-            <div style={{
-              padding: '5px 10px',
-              background: 'var(--bg-raised)',
-              border: '1px solid var(--border-dim)',
-              borderRadius: 'var(--radius)',
-              fontFamily: 'var(--f-mono)',
-              fontSize: 11,
-              color: 'var(--text-2)',
-            }}>
+            <div style={{ padding: '6px 12px', background: 'var(--bg-raised)', border: '1px solid var(--border-dim)', borderRadius: 'var(--radius)', fontFamily: 'var(--f-mono)', fontSize: 13, color: 'var(--text-2)' }}>
               🇮🇳 IN
             </div>
           </div>
