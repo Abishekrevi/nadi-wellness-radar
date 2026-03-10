@@ -57,8 +57,10 @@ export default function SocialMediaGenerator({ keyword, result }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: prompt, max_tokens: 1000 }),
             })
+            if (!response.ok) { var errB = await response.json().catch(function () { return {} }); throw new Error('Server: ' + (errB.message || errB.error || response.status)) }
             var data = await response.json()
             var text = data.content && data.content[0] ? data.content[0].text : ''
+            if (!text) throw new Error('Empty response from AI')
             setPosts(function (prev) {
                 var next = Object.assign({}, prev)
                 next[platform] = text

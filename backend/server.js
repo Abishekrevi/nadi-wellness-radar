@@ -4,6 +4,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const axios = require('axios');
 
 const { collectAllSignals } = require('./dataCollector');
 const { calculateMomentumAccelerationScore, calculateDNAScores,
@@ -74,6 +75,28 @@ app.get('/api/health', (_req, res) => res.json({
     serpapi: !!(process.env.SERPAPI_KEY && process.env.SERPAPI_KEY !== 'your_serpapi_key_here'),
   },
 }));
+
+
+// ── Quick test for ai-generate (GET for easy browser testing) ──
+app.get('/api/ai-test', async (_req, res) => {
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (!geminiKey || geminiKey.length < 10)
+    return res.json({ status: 'FAIL', reason: 'GEMINI_API_KEY not set in environment' });
+  try {
+    const r = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+      {
+        contents: [{ parts: [{ text: 'Reply with exactly: {"ok":true}' }] }],
+        generationConfig: { maxOutputTokens: 50 }
+      },
+      { timeout: 15000 }
+    );
+    const text = r.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    res.json({ status: 'OK', geminiResponse: text, keyLength: geminiKey.length });
+  } catch (err) {
+    res.json({ status: 'FAIL', error: err.response?.data?.error?.message || err.message });
+  }
+});
 
 app.get('/api/sources', (_req, res) => res.json({
   total_sources: 1000,
@@ -369,26 +392,30 @@ process.on('uncaughtException', e => console.error('[uncaughtException]', e.mess
 process.on('unhandledRejection', e => console.error('[unhandledRejection]', e));
 
 
-// ── AI Generate proxy — routes frontend AI calls through backend (avoids CORS) ──
+// ── AI Generate proxy — routes all frontend AI calls through backend ──
 app.post('/api/ai-generate', async (req, res) => {
-  const { prompt, max_tokens, system } = req.body || {};
-  if (!prompt || typeof prompt !== 'string')
+  const { prompt, max_tokens } = req.body || {};
+
+  if (!prompt || typeof prompt !== 'string') {
+    console.error('[ai-generate] Missing prompt');
     return res.status(400).json({ error: 'prompt required' });
+  }
 
   const geminiKey = process.env.GEMINI_API_KEY;
-  if (!geminiKey || geminiKey.length < 10)
-    return res.status(500).json({ error: 'AI API key not configured' });
+  if (!geminiKey || geminiKey.length < 10) {
+    console.error('[ai-generate] GEMINI_API_KEY not set');
+    return res.status(500).json({ error: 'AI API key not configured on server' });
+  }
+
+  const maxTok = Math.min(parseInt(max_tokens) || 1500, 8000);
+  console.log(`[ai-generate] prompt length=${prompt.length} max_tokens=${maxTok}`);
 
   try {
-    const fullPrompt = system ? system + '\n\n' + prompt : prompt;
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
       {
-        contents: [{ parts: [{ text: fullPrompt }] }],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: Math.min(max_tokens || 1500, 8000),
-        },
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.4, maxOutputTokens: maxTok },
         safetySettings: [
           { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
           { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
@@ -396,15 +423,18 @@ app.post('/api/ai-generate', async (req, res) => {
           { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
         ],
       },
-      { headers: { 'Content-Type': 'application/json' }, timeout: 45000 }
+      { headers: { 'Content-Type': 'application/json' }, timeout: 50000 }
     );
 
     const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    // Return in same format as Anthropic API so frontend code works unchanged
+    console.log(`[ai-generate] success, response length=${text.length}`);
+    // Return in Anthropic-compatible format so all frontend components work unchanged
     res.json({ content: [{ type: 'text', text }] });
+
   } catch (err) {
-    console.error('[ai-generate]', err.response?.data?.error?.message || err.message);
-    res.status(500).json({ error: 'AI generation failed', message: err.response?.data?.error?.message || err.message });
+    const msg = err.response?.data?.error?.message || err.message || 'Unknown error';
+    console.error('[ai-generate] FAILED:', msg);
+    res.status(500).json({ error: 'AI generation failed', message: msg });
   }
 });
 

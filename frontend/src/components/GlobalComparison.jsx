@@ -61,13 +61,13 @@ export default function GlobalComparison({ keyword, result }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: buildPrompt(keyword), max_tokens: 1000 }),
             })
+            if (!response.ok) { var errBody = await response.json().catch(function () { return {} }); throw new Error('Server: ' + (errBody.message || errBody.error || response.status)) }
             var res = await response.json()
             var text = res.content && res.content[0] ? res.content[0].text : ''
-            var clean = text.replace(/```json|```/g, '').trim()
+            if (!text) throw new Error('Empty response from AI')
+            var clean = text.replace(/```json|```/g, '').replace(/^[^{\[]*/, '').replace(/[^}\]]*$/, '').trim()
             setData(JSON.parse(clean))
-        } catch (e) {
-            setError('Could not load comparison. Try again.')
-        } finally {
+        } catch (e) { console.error('[Could not load comparison. Try again.]', e); setError(e.message || 'Could not load comparison. Try again.') } finally {
             setLoading(false)
         }
     }

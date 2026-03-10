@@ -64,10 +64,12 @@ export default function FormulationGuide({ keyword, result }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: prompt, max_tokens: 1500 }),
             })
+            if (!res.ok) { var errBody = await res.json().catch(function () { return {} }); throw new Error('Server: ' + (errBody.message || errBody.error || res.status)) }
             var d = await res.json()
             var text = d.content?.[0]?.text || ''
-            setData(JSON.parse(text.replace(/```json|```/g, '').trim()))
-        } catch (e) { setError('Could not generate formulation. Try again.') }
+            if (!text) throw new Error('Empty response from AI')
+            setData(JSON.parse(text.replace(/```json|```/g, '').replace(/^[^{\[]*/, '').replace(/[^}\]]*$/, '').trim()))
+        } catch (e) { console.error('[Could not generate formulation. Try again.]', e); setError(e.message || 'Could not generate formulation. Try again.') }
         finally { setLoading(false) }
     }
 

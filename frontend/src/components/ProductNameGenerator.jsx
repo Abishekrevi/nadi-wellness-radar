@@ -72,14 +72,14 @@ export default function ProductNameGenerator({ keyword, report }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: prompt, max_tokens: 1000 }),
             })
+            if (!response.ok) { var errB = await response.json().catch(function () { return {} }); throw new Error('Server: ' + (errB.message || errB.error || response.status)) }
             var data = await response.json()
             var text = data.content && data.content[0] ? data.content[0].text : ''
-            var clean = text.replace(/```json|```/g, '').trim()
+            if (!text) throw new Error('Empty response from AI')
+            var clean = text.replace(/```json|```/g, '').replace(/^[^{\[]*/, '').replace(/[^}\]]*$/, '').trim()
             var parsed = JSON.parse(clean)
             setNames(parsed.names || [])
-        } catch (e) {
-            setError('Could not generate names. Please try again.')
-        } finally {
+        } catch (e) { console.error('[Could not generate names. Please try again.]', e); setError(e.message || 'Could not generate names. Please try again.') } finally {
             setLoading(false)
         }
     }

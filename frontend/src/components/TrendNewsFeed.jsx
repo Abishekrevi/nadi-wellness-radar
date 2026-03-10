@@ -59,14 +59,14 @@ export default function TrendNewsFeed({ keyword }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: buildPrompt(keyword), max_tokens: 1500 }),
             })
+            if (!response.ok) { var errBody = await response.json().catch(function () { return {} }); throw new Error('Server: ' + (errBody.message || errBody.error || response.status)) }
             var res = await response.json()
             var text = res.content && res.content[0] ? res.content[0].text : ''
-            var clean = text.replace(/```json|```/g, '').trim()
+            if (!text) throw new Error('Empty response from AI')
+            var clean = text.replace(/```json|```/g, '').replace(/^[^{\[]*/, '').replace(/[^}\]]*$/, '').trim()
             var parsed = JSON.parse(clean)
             setArticles(parsed.articles || [])
-        } catch (e) {
-            setError('Could not load news feed. Try again.')
-        } finally {
+        } catch (e) { console.error('[Could not load news feed. Try again.]', e); setError(e.message || 'Could not load news feed. Try again.') } finally {
             setLoading(false)
         }
     }
