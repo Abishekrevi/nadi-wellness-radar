@@ -4,6 +4,10 @@ import EmailReport from './EmailReport.jsx'
 import ProductNameGenerator from './ProductNameGenerator.jsx'
 import SocialMediaGenerator from './SocialMediaGenerator.jsx'
 import { WatchButton } from './Watchlist.jsx'
+import PricingIntelligence from './PricingIntelligence.jsx'
+import GlobalComparison from './GlobalComparison.jsx'
+import { AlertButton, useAlerts } from './ScoreAlert.jsx'
+import TrendNewsFeed from './TrendNewsFeed.jsx'
 import ReportChat from './ReportChat.jsx'
 import IndiaHeatmap from './IndiaHeatmap.jsx'
 import ScoreBadge from './ScoreBadge.jsx'
@@ -232,7 +236,11 @@ export default function AnalyzeSingle({ watchlist }) {
             />
             <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
               {watchlist && <WatchButton result={result} watchlist={watchlist} />}
+              <AlertButton keyword={result.keyword} currentScore={result.momentumAccelerationScore} alerts={alertSystem} />
               <EmailReport result={result} />
+              <PricingIntelligence keyword={result.keyword} result={result} />
+              <GlobalComparison keyword={result.keyword} result={result} />
+              <TrendNewsFeed keyword={result.keyword} />
               <ProductNameGenerator keyword={result.keyword} report={result.intelligenceReport} />
               <SocialMediaGenerator keyword={result.keyword} result={result} />
             </div>
