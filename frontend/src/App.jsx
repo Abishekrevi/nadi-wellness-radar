@@ -1,5 +1,5 @@
 import ThemeToggle, { useTheme } from './components/ThemeToggle.jsx'
-import { useState } from 'react'
+import { useState, Component as _ReactComponent } from 'react'
 import Header from './components/Header.jsx'
 import RadarScan from './components/RadarScan.jsx'
 import AnalyzeSingle from './components/AnalyzeSingle.jsx'
@@ -11,6 +11,32 @@ import APIAccess from './components/APIAccess.jsx'
 import Onboarding from './components/Onboarding.jsx'
 import { LangProvider, LangToggle, useLang, TRANSLATIONS } from './components/LangToggle.jsx'
 import { useWatchlist } from './components/Watchlist.jsx'
+
+
+// ── Error Boundary — shows error instead of blank screen ──────────
+class ErrorBoundary extends _ReactComponent {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(e) { return { error: e }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: 40, fontFamily: 'monospace', color: '#FF4757', background: '#080C18', minHeight: '100vh' }}>
+          <div style={{ fontSize: 20, marginBottom: 12 }}>⚠ NADI Crash Report</div>
+          <div style={{ fontSize: 13, color: '#8896B3', marginBottom: 8 }}>Please screenshot this and report it:</div>
+          <pre style={{ fontSize: 11, color: '#EDE8DC', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+            {this.state.error.toString()}
+            {this.state.error.stack}
+          </pre>
+          <button onClick={() => { this.setState({ error: null }); window.location.reload(); }}
+            style={{ marginTop: 20, padding: '10px 20px', background: '#E8A020', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 700 }}>
+            Reload App
+          </button>
+        </div>
+      )
+    }
+    return this.props.children;
+  }
+}
 
 var TABS = [
   { id: 'radar', label: '🎯 Radar Scan', emoji: '🎯' },
@@ -187,8 +213,10 @@ function AppInner() {
 
 export default function App() {
   return (
-    <LangProvider>
-      <AppInner />
-    </LangProvider>
+    <ErrorBoundary>
+      <LangProvider>
+        <AppInner />
+      </LangProvider>
+    </ErrorBoundary>
   )
 }

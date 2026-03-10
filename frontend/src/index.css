@@ -7,7 +7,46 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 /* ── Dark theme (default) ───────────────────────────────────── */
-:root,
+:root {
+  /* Dark theme is default — these fire on FIRST PAINT before React sets data-theme */
+  --gold: #E8A020;
+  --gold-hi: #FFB830;
+  --gold-lo: rgba(232, 160, 32, 0.12);
+  --gold-glow: rgba(232, 160, 32, 0.22);
+  --teal: #00C9B1;
+  --teal-hi: #2FFDE4;
+  --teal-lo: rgba(0, 201, 177, 0.12);
+  --violet: #7C5CFC;
+  --violet-lo: rgba(124, 92, 252, 0.12);
+  --red: #FF4757;
+  --red-lo: rgba(255, 71, 87, 0.12);
+  --green: #00D46A;
+  --green-lo: rgba(0, 212, 106, 0.1);
+  --amber: #FFA502;
+  --amber-lo: rgba(255, 165, 2, 0.1);
+  --orange: #FF6B35;
+  --bg-base: #080C18;
+  --bg-raised: #0C1120;
+  --bg-card: #101828;
+  --bg-float: #141F32;
+  --bg-hover: #1A2840;
+  --border-dim: rgba(255, 255, 255, 0.055);
+  --border-mid: rgba(255, 255, 255, 0.10);
+  --border-hi: rgba(232, 160, 32, 0.35);
+  --text-1: #EDE8DC;
+  --text-2: #7D90AA;
+  --text-3: #3A4F68;
+  --shadow-card: 0 2px 32px rgba(0, 0, 0, 0.65), 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-gold: 0 0 48px rgba(232, 160, 32, 0.12);
+  --shadow-teal: 0 0 48px rgba(0, 201, 177, 0.10);
+  --radius: 10px;
+  --radius-lg: 16px;
+  --f-display: 'Fraunces', Georgia, serif;
+  --f-body: 'DM Sans', system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+/* Dark theme explicit (same values, for when data-theme is set by React) */
 [data-theme="dark"] {
   --gold: #E8A020;
   --gold-hi: #FFB830;
