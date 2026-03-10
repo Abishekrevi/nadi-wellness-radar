@@ -50,6 +50,7 @@ export default function AnalyzeSingle({ watchlist }) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
+  const alertSystem = useAlerts()
 
   const analyze = async (keyword) => {
     const target = (keyword || kw).trim()

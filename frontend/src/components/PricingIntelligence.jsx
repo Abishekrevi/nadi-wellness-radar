@@ -99,6 +99,8 @@ export default function PricingIntelligence({ keyword, result }) {
         setLoading(true)
         setError(null)
         try {
+            // Build prompt (with optional RAG context)
+            var prompt = buildPrompt(keyword, result || {})
             var response = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
