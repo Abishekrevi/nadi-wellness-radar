@@ -241,7 +241,9 @@ function securityMiddleware(req, res, next) {
     }
 
     // 4. Scan request body for injection attacks
-    if (req.body && typeof req.body === 'object') {
+    // SKIP for AI/RAG endpoints — prompts legitimately contain SQL-like and code-like text
+    const PROMPT_ENDPOINTS = ['/api/ai-generate', '/api/rag-retrieve', '/api/one-pager'];
+    if (req.body && typeof req.body === 'object' && !PROMPT_ENDPOINTS.includes(req.path)) {
         const threat = scanBody(req.body, 0);
         if (threat) {
             console.warn(`[SECURITY] ${threat} detected from ${ip} on ${req.path}`);
@@ -250,7 +252,7 @@ function securityMiddleware(req, res, next) {
         }
     }
 
-    // 5. Scan query params
+    // 5. Scan query params (always safe to scan — never contain prompts)
     for (const v of Object.values(req.query || {})) {
         const threat = detectThreat(v);
         if (threat) {
