@@ -81,25 +81,25 @@ app.get('/api/health', (_req, res) => res.json({
 app.get('/api/ai-test', async (_req, res) => {
   const geminiKey = process.env.GEMINI_API_KEY;
   if (!geminiKey || geminiKey.length < 10)
-    return res.json({ status: 'FAIL', reason: 'GEMINI_API_KEY not set in environment', keyLength: (geminiKey || '').length });
-  try {
-    const r = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
-      {
-        contents: [{ parts: [{ text: 'Reply with exactly this JSON and nothing else: {"ok":true,"status":"working"}' }] }],
-        generationConfig: { maxOutputTokens: 100, temperature: 0 }
-      },
-      { timeout: 15000 }
-    );
-    const text = r.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const finishReason = r.data?.candidates?.[0]?.finishReason || 'unknown';
-    const blocked = r.data?.promptFeedback?.blockReason || null;
-    res.json({ status: 'OK', geminiResponse: text, finishReason, blocked, keyLength: geminiKey.length });
-  } catch (err) {
-    const errMsg = err.response?.data?.error?.message || err.message;
-    const errStatus = err.response?.status;
-    res.json({ status: 'FAIL', error: errMsg, httpStatus: errStatus, keyLength: geminiKey.length });
+    return res.json({ status: 'FAIL', reason: 'GEMINI_API_KEY not set', keyLength: (geminiKey || '').length });
+
+  const MODELS = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash-latest', 'gemini-1.5-flash-002', 'gemini-pro'];
+  for (const model of MODELS) {
+    try {
+      const r = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+        { contents: [{ parts: [{ text: 'Say: {"ok":true}' }] }], generationConfig: { maxOutputTokens: 50, temperature: 0 } },
+        { timeout: 15000 }
+      );
+      const text = r.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (text) return res.json({ status: 'OK', model, geminiResponse: text, keyLength: geminiKey.length });
+    } catch (err) {
+      if (err.response?.status !== 404 && err.response?.status !== 400) {
+        return res.json({ status: 'FAIL', model, error: err.response?.data?.error?.message || err.message });
+      }
+    }
   }
+  res.json({ status: 'FAIL', error: 'No working Gemini model found', keyLength: geminiKey.length });
 });
 
 app.get('/api/sources', (_req, res) => res.json({
@@ -396,85 +396,77 @@ process.on('uncaughtException', e => console.error('[uncaughtException]', e.mess
 process.on('unhandledRejection', e => console.error('[unhandledRejection]', e));
 
 
-// ── AI Generate proxy — routes all frontend AI calls through backend ──
+// ── AI Generate proxy — auto-tries multiple Gemini models ──
 app.post('/api/ai-generate', async (req, res) => {
   const { prompt, max_tokens } = req.body || {};
 
   if (!prompt || typeof prompt !== 'string') {
-    console.error('[ai-generate] Missing prompt');
     return res.status(400).json({ error: 'prompt required' });
   }
 
   const geminiKey = process.env.GEMINI_API_KEY;
   if (!geminiKey || geminiKey.length < 10) {
-    console.error('[ai-generate] GEMINI_API_KEY not set');
-    return res.status(500).json({ error: 'AI API key not configured on server' });
+    return res.status(500).json({ error: 'GEMINI_API_KEY not set in Render environment variables' });
   }
 
-  // Detect if this prompt expects JSON back
-  const wantsJson = prompt.includes('Respond ONLY with valid JSON') || prompt.includes('no markdown');
   const maxTok = Math.min(parseInt(max_tokens) || 2000, 8000);
+  const truncatedPrompt = prompt.length > 10000 ? prompt.slice(0, 10000) + '\n[truncated]' : prompt;
 
-  // Truncate very long prompts to avoid Gemini limits (keep first 12000 chars)
-  const truncatedPrompt = prompt.length > 12000
-    ? prompt.slice(0, 12000) + '\n[Context truncated for length]'
-    : prompt;
+  // Try models in order until one works
+  const MODELS = [
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-flash-002',
+    'gemini-1.5-flash-001',
+    'gemini-pro',
+  ];
 
-  console.log(`[ai-generate] wantsJson=${wantsJson} promptLen=${truncatedPrompt.length} maxTok=${maxTok}`);
+  const body = {
+    contents: [{ parts: [{ text: truncatedPrompt }] }],
+    generationConfig: { temperature: 0.3, maxOutputTokens: maxTok },
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+    ],
+  };
 
-  try {
-    const body = {
-      contents: [{ parts: [{ text: truncatedPrompt }] }],
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: maxTok,
-        // responseMimeType not used - causes errors on some Gemini versions
-      },
-      safetySettings: [
-        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-      ],
-    };
+  let lastError = '';
+  for (const model of MODELS) {
+    try {
+      console.log(`[ai-generate] Trying model: ${model}`);
+      const response = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+        body,
+        { headers: { 'Content-Type': 'application/json' }, timeout: 60000 }
+      );
 
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
-      body,
-      { headers: { 'Content-Type': 'application/json' }, timeout: 60000 }
-    );
+      const candidate = response.data?.candidates?.[0];
+      if (!candidate || candidate.finishReason === 'SAFETY') {
+        lastError = 'blocked or empty from ' + model;
+        continue;
+      }
 
-    const candidate = response.data?.candidates?.[0];
+      const text = candidate.content?.parts?.[0]?.text || '';
+      if (!text) { lastError = 'empty text from ' + model; continue; }
 
-    // Check for safety block or empty response
-    if (!candidate) {
-      const blockReason = response.data?.promptFeedback?.blockReason || 'No candidates returned';
-      console.error('[ai-generate] Blocked/empty:', blockReason, JSON.stringify(response.data).slice(0, 300));
-      return res.status(500).json({ error: 'AI blocked response', message: blockReason });
+      console.log(`[ai-generate] ✅ Success with ${model}, textLen=${text.length}`);
+      return res.json({ content: [{ type: 'text', text }] });
+
+    } catch (err) {
+      lastError = `${model}: ${err.response?.data?.error?.message || err.message}`;
+      console.log(`[ai-generate] ❌ ${lastError}`);
+      // If not a 404 (model not found), don't try others
+      if (err.response?.status && err.response.status !== 404 && err.response.status !== 400) {
+        return res.status(500).json({ error: 'AI generation failed', message: lastError });
+      }
     }
-
-    if (candidate.finishReason === 'SAFETY') {
-      console.error('[ai-generate] Safety blocked');
-      return res.status(500).json({ error: 'Content blocked by safety filter', message: 'SAFETY' });
-    }
-
-    const text = candidate.content?.parts?.[0]?.text || '';
-    console.log(`[ai-generate] success finishReason=${candidate.finishReason} textLen=${text.length}`);
-
-    if (!text) {
-      console.error('[ai-generate] Empty text. Full response:', JSON.stringify(response.data).slice(0, 500));
-      return res.status(500).json({ error: 'Empty response from AI', message: 'Gemini returned empty text' });
-    }
-
-    res.json({ content: [{ type: 'text', text }] });
-
-  } catch (err) {
-    const msg = err.response?.data?.error?.message || err.message || 'Unknown error';
-    const status = err.response?.status || 500;
-    console.error(`[ai-generate] FAILED status=${status}:`, msg);
-    console.error('[ai-generate] Full error:', JSON.stringify(err.response?.data || {}).slice(0, 500));
-    res.status(500).json({ error: 'AI generation failed', message: msg, status });
   }
+
+  console.error('[ai-generate] All models failed. Last:', lastError);
+  res.status(500).json({ error: 'All Gemini models failed', message: lastError });
 });
 
 app.listen(PORT, () => console.log(`\n🧬  NADI v2.0 running → http://localhost:${PORT}\n`));

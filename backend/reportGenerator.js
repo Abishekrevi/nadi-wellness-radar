@@ -80,28 +80,29 @@ Return ONLY a valid JSON object. No markdown, no backticks, no explanation text 
   const fullPrompt = systemPrompt + '\n\n' + userPrompt;
 
   try {
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        contents: [{
-          parts: [{ text: fullPrompt }]
-        }],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 2000,
-        },
-        safetySettings: [
-          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-        ]
-      },
-      {
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 30000,
+    const MODELS = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash-latest', 'gemini-1.5-flash-002', 'gemini-pro'];
+    let response = null;
+    for (const model of MODELS) {
+      try {
+        response = await axios.post(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {
+            contents: [{ parts: [{ text: fullPrompt }] }],
+            generationConfig: { temperature: 0.3, maxOutputTokens: 2000 },
+            safetySettings: [
+              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+            ]
+          },
+          { headers: { 'Content-Type': 'application/json' }, timeout: 30000 }
+        );
+        if (response.data?.candidates?.[0]?.content?.parts?.[0]?.text) break;
+      } catch (e) {
+        if (!e.response || (e.response.status !== 404 && e.response.status !== 400)) throw e;
       }
-    );
+    }
 
     // Extract text from Gemini's response structure
     const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
