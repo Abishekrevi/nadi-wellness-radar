@@ -375,7 +375,42 @@ app.post('/api/batch-scan', rateLimit(3), async (req, res) => {
   res.json({ count: results.length, results });
 });
 
-// ── Community leaderboard ───────────────────────────────────────
+// ── India Heatmap — regional trend data ────────────────────────
+app.get('/api/india-heatmap', rateLimit(20), async (req, res) => {
+  const keyword = sanitizeString(req.query.keyword || '');
+  if (!keyword) return res.status(400).json({ error: 'keyword required' });
+  const cacheKey = 'heatmap:' + keyword;
+  const cached = getCached(cacheKey);
+  if (cached) return res.json(cached);
+  // Try SerpAPI Google Trends by region
+  const serpKey = process.env.SERPAPI_KEY;
+  if (serpKey && serpKey.length > 10) {
+    try {
+      const axios = require('axios');
+      const r = await axios.get('https://serpapi.com/search.json', {
+        params: { engine: 'google_trends', q: keyword, geo: 'IN', data_type: 'GEO_MAP', date: 'today 12-m', api_key: serpKey },
+        timeout: 10000,
+      });
+      const geo = r.data?.interest_by_region || [];
+      if (geo.length) {
+        const stateMap = {};
+        const stateIds = { 'Maharashtra': 'MH', 'Delhi': 'DL', 'Karnataka': 'KA', 'Tamil Nadu': 'TN', 'Gujarat': 'GJ', 'Rajasthan': 'RJ', 'West Bengal': 'WB', 'Telangana': 'TS', 'Kerala': 'KL', 'Uttar Pradesh': 'UP', 'Madhya Pradesh': 'MP', 'Haryana': 'HR', 'Punjab': 'PB', 'Andhra Pradesh': 'AP', 'Odisha': 'OR', 'Bihar': 'BR', 'Jharkhand': 'JH', 'Chhattisgarh': 'CG', 'Assam': 'AS', 'Himachal Pradesh': 'HP' };
+        const max = Math.max(...geo.map(g => g.value || 0)) || 1;
+        for (const g of geo) {
+          const id = stateIds[g.location];
+          if (id) stateMap[id] = (g.value || 0) / max;
+        }
+        const result = { states: stateMap, source: 'google_trends', keyword };
+        setCache(cacheKey, result);
+        return res.json(result);
+      }
+    } catch (e) { /* fall through to modelled */ }
+  }
+  // Return empty — frontend uses weighted model as fallback
+  res.json({ states: {}, source: 'modelled', keyword });
+});
+
+
 app.get('/api/leaderboard', (_req, res) => {
   const grouped = {};
   for (const scan of scanHistory) {

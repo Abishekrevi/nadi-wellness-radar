@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { AlertButton, useAlerts } from './ScoreAlert.jsx'
-import NADIDebug from './NADIDebug.jsx'
 import { WatchButton } from './Watchlist.jsx'
 import ScoreRing from './ScoreRing.jsx'
 import TrendChart from './TrendChart.jsx'
@@ -9,6 +8,8 @@ import IntelligenceReport from './IntelligenceReport.jsx'
 import ScoreBadge from './ScoreBadge.jsx'
 import KeywordSuggestions from './KeywordSuggestions.jsx'
 import FadDetector from './FadDetector.jsx'
+import ShareBar from './ShareBar.jsx'
+import InvestorOnePager from './InvestorOnePager.jsx'
 
 // Lazy-load the heavy components to prevent import-chain crashes
 var LazyComponents = null
@@ -29,6 +30,7 @@ function loadLazyComponents() {
     import('./ResearchReport.jsx'),
     import('./ReportChat.jsx'),
     import('./IndiaHeatmap.jsx'),
+    import('./TrajectoryForecast.jsx'),
   ]).then(function (mods) {
     LazyComponents = {
       EmailReport: mods[0].default,
@@ -44,6 +46,7 @@ function loadLazyComponents() {
       ResearchReport: mods[10].default,
       ReportChat: mods[11].default,
       IndiaHeatmap: mods[12].default,
+      TrajectoryForecast: mods[13].default,
     }
   }).catch(function (e) {
     console.error('Failed to load lazy components:', e)
@@ -78,6 +81,7 @@ export default function AnalyzeSingle({ watchlist }) {
   var [error, setError] = useState(null)
   var [lazyReady, setLazyReady] = useState(false)
   var alertSystem = useAlerts()
+  var savedReports = useSavedReports()
 
   // Pre-load lazy components on mount
   useEffect(function () {
@@ -337,9 +341,9 @@ export default function AnalyzeSingle({ watchlist }) {
             {lazyReady && L && (
               <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
                 {watchlist && <WatchButton result={result} watchlist={watchlist} />}
+
                 <AlertButton keyword={result.keyword} currentScore={result.momentumAccelerationScore || 0} alerts={alertSystem} />
                 <L.EmailReport result={result} />
-                <NADIDebug keyword={result.keyword} />
                 <L.PricingIntelligence keyword={result.keyword} result={result} />
                 <L.GlobalComparison keyword={result.keyword} result={result} />
                 <L.TrendNewsFeed keyword={result.keyword} />
@@ -358,9 +362,12 @@ export default function AnalyzeSingle({ watchlist }) {
             {lazyReady && L && (
               <>
                 <L.IndiaHeatmap keyword={result.keyword} score={result.momentumAccelerationScore || 0} />
+                <L.TrajectoryForecast keyword={result.keyword} result={result} />
                 <L.ReportChat result={result} />
               </>
             )}
+            <InvestorOnePager result={result} />
+            <ShareBar result={result} />
           </div>
 
         </div>
