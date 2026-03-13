@@ -10,7 +10,9 @@ const axios = require('axios');
  * using Google Gemini AI with real data as grounding
  */
 async function generateIntelligenceReport(trendData, masResult, apiKey) {
-  if (!apiKey || apiKey === 'your_gemini_api_key_here') {
+  // Uses Groq via callAI (imported from server.js)
+  const hasAnyKey = !!(process.env.GROQ_API_KEY?.length > 10);
+  if (!hasAnyKey) {
     return generateTemplatedReport(trendData, masResult);
   }
 
@@ -80,38 +82,21 @@ Return ONLY a valid JSON object. No markdown, no backticks, no explanation text 
   const fullPrompt = systemPrompt + '\n\n' + userPrompt;
 
   try {
-    const MODELS = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash-latest', 'gemini-1.5-flash-002', 'gemini-pro'];
-    let response = null;
-    for (const model of MODELS) {
-      try {
-        response = await axios.post(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-          {
-            contents: [{ parts: [{ text: fullPrompt }] }],
-            generationConfig: { temperature: 0.3, maxOutputTokens: 2000 },
-            safetySettings: [
-              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-            ]
-          },
-          { headers: { 'Content-Type': 'application/json' }, timeout: 30000 }
-        );
-        if (response.data?.candidates?.[0]?.content?.parts?.[0]?.text) break;
-      } catch (e) {
-        if (!e.response || (e.response.status !== 404 && e.response.status !== 400)) throw e;
-      }
+    // Use multi-provider AI caller (Gemini → Groq → Mistral → OpenRouter)
+    const { callAI } = require('./server');
+    let text;
+    try {
+      text = await callAI(fullPrompt, 2000);
+    } catch (aiErr) {
+      console.error('All AI providers failed in reportGenerator:', aiErr.message);
+      return generateTemplatedReport(trendData, masResult);
     }
-
-    // Extract text from Gemini's response structure
-    const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) {
-      console.error('Gemini returned empty response');
+      console.error('[reportGenerator] AI returned empty text');
       return generateTemplatedReport(trendData, masResult);
     }
 
-    // Strip markdown code fences if Gemini added them
+    // Strip markdown code fences
     const cleaned = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
 
     // Parse the JSON object
@@ -125,7 +110,7 @@ Return ONLY a valid JSON object. No markdown, no backticks, no explanation text 
       }
     }
 
-    console.error('No JSON found in Gemini response');
+    console.error('[reportGenerator] No JSON found in AI response');
     return generateTemplatedReport(trendData, masResult);
 
   } catch (err) {
