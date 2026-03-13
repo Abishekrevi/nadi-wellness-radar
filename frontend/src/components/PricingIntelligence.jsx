@@ -74,17 +74,22 @@ export default function PricingIntelligence({ keyword, result }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt, max_tokens: 1500 }),
             })
-            if (!res.ok) { var e = await res.json().catch(() => ({})); throw new Error(e.message || 'Server error ' + res.status) }
+            if (!res.ok) {
+                var errBody = await res.json().catch(() => ({}))
+                throw new Error(errBody.message || errBody.error || 'Server error ' + res.status)
+            }
             var body = await res.json()
             var text = body.content?.[0]?.text || body.content || ''
+            if (typeof text !== 'string') text = JSON.stringify(text)
+            if (!text) throw new Error('Empty response from AI')
             var cleaned = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
             var jsonMatch = cleaned.match(/\{[\s\S]*\}/)
-            if (!jsonMatch) throw new Error('Could not parse pricing data')
+            if (!jsonMatch) throw new Error('Could not parse pricing data from AI response')
             setData(JSON.parse(jsonMatch[0]))
             setOpen(true)
         } catch (e) {
-            setError('Could not generate pricing data. Try again.')
-            console.error(e)
+            setError(e.message || 'Could not generate pricing data. Try again.')
+            console.error('[PricingIntelligence]', e)
         } finally { setLoading(false) }
     }
 
@@ -189,7 +194,7 @@ export default function PricingIntelligence({ keyword, result }) {
                         </div>
                     )}
 
-                    {rag.sources.length > 0 && <SourcePanel sources={rag.sources} />}
+                    {rag.sources && rag.sources.length > 0 && <SourcePanel sources={rag.sources} />}
                 </div>
             )}
         </div>
